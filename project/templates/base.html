@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="{{ 'dark' if current_user.is_authenticated and current_user.pref_dark_mode else 'light' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AgendaNova - Sistema de gestión de citas para clínicas">
+    <title>{% block title %}AgendaNova{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
+    <!-- Bootstrap 5.3 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.4 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- ============================================================ -->
+    <!-- NAVBAR (Solo si está autenticado) -->
+    <!-- ============================================================ -->
+    {% if current_user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg sticky-top">
+        <div class="container-fluid">
+            <!-- Logo y Nombre -->
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('auth.dashboard') }}">
+                {% if current_user.clinic_id and current_user.clinic.logo_url %}
+                    <img src="{{ current_user.clinic.logo_url }}" alt="Logo" class="navbar-logo me-2">
+                {% else %}
+                    <i class="fas fa-calendar-check me-2"></i>
+                {% endif %}
+                <span class="brand-text">
+                    {% if current_user.clinic_id %}
+                        {{ current_user.clinic.name }}
+                    {% else %}
+                        AgendaNova
+                    {% endif %}
+                </span>
+            </a>
+
+            <!-- Toggler para móvil -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Menu Items -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    
+                    <!-- Link: Dashboard -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.dashboard') }}">
+                            <i class="fas fa-home"></i>
+                            <span class="d-none d-md-inline ms-1">Inicio</span>
+                        </a>
+                    </li>
+
+                    <!-- Link: Panel Super Admin (solo SUPER_ADMIN) -->
+                    {% if current_user.is_super_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('super_admin.dashboard') }}">
+                            <i class="fas fa-crown"></i>
+                            <span class="d-none d-md-inline ms-1">Super Admin</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Link: Panel Clinic Admin (solo CLINIC_ADMIN) -->
+                    {% if current_user.is_clinic_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('clinic_admin.dashboard') }}">
+                            <i class="fas fa-users-cog"></i>
+                            <span class="d-none d-md-inline ms-1">Administración</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <!-- Separador -->
+                    <li class="nav-item d-none d-lg-block">
+                        <span class="navbar-divider"></span>
+                    </li>
+
+                    <!-- Notificaciones -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link position-relative" href="#" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false" id="notificationsDropdown">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown" 
+                            aria-labelledby="notificationsDropdown" id="notificationList">
+                            <li class="dropdown-header">
+                                <i class="fas fa-bell me-2"></i>Notificaciones
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="px-3 py-2 text-muted text-center">
+                                <div class="spinner-border spinner-border-sm me-2" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                Cargando notificaciones...
+                            </li>
+                        </ul>
+                    </li>
+
+                    <!-- Toggle Tema Oscuro -->
+                    <li class="nav-item">
+                        <button class="nav-link btn-theme-toggle" id="themeToggle" 
+                                title="Cambiar tema" aria-label="Cambiar tema">
+                            <i class="fas fa-moon" id="themeIcon"></i>
+                        </button>
+                    </li>
+
+                    <!-- Usuario (Dropdown) -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle user-dropdown" href="#" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <div class="user-avatar">
+                                <i class="fas fa-user-circle"></i>
+                            </div>
+                            <div class="user-info d-none d-md-inline-block ms-2">
+                                <div class="user-name">{{ current_user.full_name or current_user.username }}</div>
+                                <div class="user-role">
+                                    <span class="role-badge role-{{ current_user.role.value.lower().replace('_', '-') }}">
+                                        {% if current_user.is_super_admin() %}
+                                            Super Admin
+                                        {% elif current_user.is_clinic_admin() %}
+                                            Admin
+                                        {% elif current_user.is_professional() %}
+                                            Profesional
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <div class="dropdown-header">
+                                    <div class="fw-bold">{{ current_user.username }}</div>
+                                    <small class="text-muted">{{ current_user.email }}</small>
+                                </div>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('auth.account_settings') }}">
+                                    <i class="fas fa-user-cog me-2"></i>Mi Cuenta
+                                </a>
+                            </li>
+                            {% if current_user.is_clinic_admin() %}
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('clinic_admin.dashboard') }}">
+                                    <i class="fas fa-cog me-2"></i>Configuración de Clínica
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <!-- ============================================================ -->
+    <!-- FLASH MESSAGES -->
+    <!-- ============================================================ -->
+    <div class="container-fluid flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show flash-message" role="alert">
+                    {% if category == 'success' %}
+                        <i class="fas fa-check-circle me-2"></i>
+                    {% elif category == 'danger' %}
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                    {% elif category == 'warning' %}
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% else %}
+                        <i class="fas fa-info-circle me-2"></i>
+                    {% endif %}
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MAIN CONTENT -->
+    <!-- ============================================================ -->
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- ============================================================ -->
+    <!-- FOOTER -->
+    <!-- ============================================================ -->
+    <footer class="footer mt-auto py-3">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6 text-center text-md-start">
+                    <span class="text-muted">
+                        &copy; {{ current_year }} {{ app_name }} v{{ app_version }}
+                    </span>
+                </div>
+                <div class="col-md-6 text-center text-md-end">
+                    <span class="text-muted">
+                        Desarrollado con <i class="fas fa-heart text-danger"></i> para clínicas
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ============================================================ -->
+    <!-- SCRIPTS -->
+    <!-- ============================================================ -->
+    <!-- Bootstrap Bundle (incluye Popper) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script Global: Notificaciones y Tema -->
+    {% if current_user.is_authenticated %}
+    <script>
+        // ================================================================
+        // NOTIFICACIONES
+        // ================================================================
+        function loadNotifications() {
+            fetch('/api/notifications')
+                .then(res => res.json())
+                .then(data => {
+                    const count = data.length;
+                    const badge = document.getElementById('notificationCount');
+                    const list = document.getElementById('notificationList');
+                    
+                    if (count > 0) {
+                        badge.textContent = count > 9 ? '9+' : count;
+                        badge.style.display = 'flex';
+                        
+                        list.innerHTML = `
+                            <li class="dropdown-header">
+                                <i class="fas fa-bell me-2"></i>Notificaciones (${count})
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                        `;
+                        
+                        data.forEach(notif => {
+                            const item = document.createElement('li');
+                            item.innerHTML = `
+                                <div class="notification-item" onclick="markAsRead(${notif.id})">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <div class="notification-message">${notif.message}</div>
+                                            <small class="notification-time">
+                                                <i class="far fa-clock me-1"></i>${notif.created_at}
+                                            </small>
+                                        </div>
+                                        <button class="btn btn-sm btn-link text-success p-0 ms-2" 
+                                                onclick="event.stopPropagation(); markAsRead(${notif.id})"
+                                                title="Marcar como leída">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            list.appendChild(item);
+                        });
+                        
+                        // Botón "Marcar todas como leídas"
+                        const markAllItem = document.createElement('li');
+                        markAllItem.innerHTML = `
+                            <hr class="dropdown-divider">
+                            <div class="text-center py-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="markAllAsRead()">
+                                    <i class="fas fa-check-double me-1"></i>Marcar todas como leídas
+                                </button>
+                            </div>
+                        `;
+                        list.appendChild(markAllItem);
+                        
+                    } else {
+                        badge.style.display = 'none';
+                        list.innerHTML = `
+                            <li class="dropdown-header">
+                                <i class="fas fa-bell me-2"></i>Notificaciones
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li class="px-3 py-3 text-muted text-center">
+                                <i class="far fa-bell-slash fa-2x mb-2 d-block"></i>
+                                No hay notificaciones nuevas
+                            </li>
+                        `;
+                    }
+                })
+                .catch(err => {
+                    console.error('Error loading notifications:', err);
+                    const list = document.getElementById('notificationList');
+                    list.innerHTML = `
+                        <li class="px-3 py-2 text-muted text-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Error al cargar notificaciones
+                        </li>
+                    `;
+                });
+        }
+        
+        function markAsRead(id) {
+            fetch(`/api/notifications/${id}/read`, { method: 'POST' })
+                .then(() => {
+                    loadNotifications();
+                })
+                .catch(err => console.error('Error marking as read:', err));
+        }
+        
+        function markAllAsRead() {
+            // Obtener todas las notificaciones actuales
+            fetch('/api/notifications')
+                .then(res => res.json())
+                .then(notifications => {
+                    const promises = notifications.map(n => 
+                        fetch(`/api/notifications/${n.id}/read`, { method: 'POST' })
+                    );
+                    return Promise.all(promises);
+                })
+                .then(() => {
+                    loadNotifications();
+                    showToast('Todas las notificaciones marcadas como leídas', 'success');
+                })
+                .catch(err => console.error('Error marking all as read:', err));
+        }
+
+        // ================================================================
+        // TEMA OSCURO
+        // ================================================================
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const html = document.documentElement;
+        
+        function updateThemeIcon(isDark) {
+            if (isDark) {
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+                themeToggle.setAttribute('title', 'Cambiar a tema claro');
+            } else {
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+                themeToggle.setAttribute('title', 'Cambiar a tema oscuro');
+            }
+        }
+        
+        // Inicializar icono según tema actual
+        const currentTheme = html.getAttribute('data-theme');
+        updateThemeIcon(currentTheme === 'dark');
+        
+        themeToggle.addEventListener('click', function() {
+            fetch('/account/toggle-dark-mode', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    const newTheme = data.dark_mode ? 'dark' : 'light';
+                    html.setAttribute('data-theme', newTheme);
+                    updateThemeIcon(data.dark_mode);
+                    
+                    // Guardar en localStorage como backup
+                    localStorage.setItem('theme', newTheme);
+                })
+                .catch(err => {
+                    console.error('Error toggling theme:', err);
+                    showToast('Error al cambiar el tema', 'danger');
+                });
+        });
+
+        // ================================================================
+        // TOAST NOTIFICATIONS (Helper Global)
+        // ================================================================
+        function showToast(message, type = 'info') {
+            const toastContainer = document.createElement('div');
+            toastContainer.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                z-index: 9999;
+                animation: slideInRight 0.3s ease-out;
+                max-width: 400px;
+            `;
+            
+            const alertClass = type === 'success' ? 'alert-success' : 
+                              type === 'danger' ? 'alert-danger' : 
+                              type === 'warning' ? 'alert-warning' : 'alert-info';
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                         type === 'danger' ? 'fa-exclamation-circle' : 
+                         type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+            
+            toastContainer.innerHTML = `
+                <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                    <i class="fas ${icon} me-2"></i>${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toastContainer);
+            
+            // Auto-cerrar después de 4 segundos
+            setTimeout(() => {
+                toastContainer.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(() => toastContainer.remove(), 300);
+            }, 4000);
+        }
+        
+        // Hacer showToast global
+        window.showToast = showToast;
+
+        // ================================================================
+        // AUTO-DISMISS FLASH MESSAGES
+        // ================================================================
+        document.addEventListener('DOMContentLoaded', function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(msg => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(msg);
+                    bsAlert.close();
+                }, 5000);
+            });
+        });
+
+        // ================================================================
+        // CARGAR NOTIFICACIONES AL INICIAR
+        // ================================================================
+        loadNotifications();
+        
+        // Recargar cada 30 segundos
+        setInterval(loadNotifications, 30000);
+    </script>
+    {% endif %}
+
+    <!-- Scripts personalizados de cada página -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

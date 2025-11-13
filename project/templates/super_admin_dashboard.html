@@ -1,0 +1,704 @@
+{% extends "base.html" %}
+
+{% block title %}Super Admin Dashboard - AgendaNova{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos del Super Admin Dashboard */
+    .super-admin-container {
+        max-width: 1600px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    /* ============================================================ */
+    /* HEADER */
+    /* ============================================================ */
+    .super-admin-header {
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(220, 38, 38, 0.3);
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .super-admin-header h2 {
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .super-admin-header .crown-icon {
+        font-size: 2rem;
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    /* ============================================================ */
+    /* STATS CARDS */
+    /* ============================================================ */
+    .admin-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .admin-stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        animation: fadeIn 0.8s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .admin-stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    .admin-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .admin-stat-card.danger::before {
+        background: linear-gradient(90deg, #dc2626, #991b1b);
+    }
+
+    .admin-stat-card.success::before {
+        background: linear-gradient(90deg, #10b981, #059669);
+    }
+
+    .admin-stat-card.warning::before {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon-large {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        background: linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(79, 70, 229, 0.05));
+        color: var(--primary);
+    }
+
+    .stat-icon-large.danger {
+        background: linear-gradient(135deg, rgba(220, 38, 38, 0.1), rgba(220, 38, 38, 0.05));
+        color: #dc2626;
+    }
+
+    .stat-icon-large.success {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
+        color: #10b981;
+    }
+
+    .stat-icon-large.warning {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
+        color: #f59e0b;
+    }
+
+    .stat-value-large {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--dark);
+        line-height: 1;
+    }
+
+    .stat-label-large {
+        color: var(--gray);
+        font-size: 1rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    .stat-trend {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        margin-top: 0.5rem;
+    }
+
+    .stat-trend.up {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .stat-trend.down {
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+    }
+
+    /* ============================================================ */
+    /* CLINICS TABLE */
+    /* ============================================================ */
+    .clinics-section {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 1s ease-out;
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .section-header h4 {
+        margin: 0;
+        color: var(--dark);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-responsive {
+        margin-top: 1rem;
+    }
+
+    .clinics-table {
+        width: 100%;
+        margin: 0;
+    }
+
+    .clinics-table thead {
+        background: var(--light);
+    }
+
+    .clinics-table th {
+        font-weight: 600;
+        color: var(--dark);
+        border: none;
+        padding: 1rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .clinics-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .clinics-table tbody tr {
+        transition: background 0.2s ease;
+    }
+
+    .clinics-table tbody tr:hover {
+        background: var(--light);
+    }
+
+    .clinic-name-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .clinic-logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 2px solid var(--border);
+    }
+
+    .clinic-logo-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 1.2rem;
+    }
+
+    .clinic-info h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .clinic-info small {
+        color: var(--gray);
+        font-size: 0.8rem;
+    }
+
+    .badge-plan {
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .badge-plan.free {
+        background: rgba(107, 114, 128, 0.1);
+        color: #6b7280;
+    }
+
+    .badge-plan.basic {
+        background: rgba(79, 70, 229, 0.1);
+        color: #4f46e5;
+    }
+
+    .badge-plan.premium {
+        background: rgba(245, 158, 11, 0.1);
+        color: #f59e0b;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge.active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .status-badge.inactive {
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+    }
+
+    .status-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-action-sm {
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .btn-action-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-action-sm i {
+        font-size: 0.875rem;
+    }
+
+    /* ============================================================ */
+    /* MODAL CUSTOMIZATION */
+    /* ============================================================ */
+    .modal-header.super-admin {
+        background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    }
+
+    /* ============================================================ */
+    /* EMPTY STATE */
+    /* ============================================================ */
+    .empty-clinics {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--gray);
+    }
+
+    .empty-clinics i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    /* ============================================================ */
+    /* RESPONSIVE */
+    /* ============================================================ */
+    @media (max-width: 768px) {
+        .admin-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .clinics-section {
+            padding: 1rem;
+        }
+
+        .section-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-action-sm {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* ============================================================ */
+    /* DARK MODE */
+    /* ============================================================ */
+    [data-theme="dark"] .super-admin-header {
+        background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+    }
+
+    [data-theme="dark"] .admin-stat-card,
+    [data-theme="dark"] .clinics-section {
+        background: #1e293b;
+    }
+
+    [data-theme="dark"] .clinics-table thead {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .clinics-table tbody tr:hover {
+        background: #0f172a;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="super-admin-container">
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <div class="super-admin-header">
+        <h2>
+            <span class="crown-icon">
+                <i class="fas fa-crown"></i>
+            </span>
+            Panel de Super Administrador
+        </h2>
+        <p class="mb-0 mt-2">Gestión global del sistema AgendaNova</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATISTICS CARDS -->
+    <!-- ============================================================ -->
+    <div class="admin-stats-grid">
+        <!-- Total Clínicas -->
+        <div class="admin-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-large">
+                    <i class="fas fa-hospital"></i>
+                </div>
+            </div>
+            <div class="stat-value-large" id="totalClinics">0</div>
+            <div class="stat-label-large">Clínicas Totales</div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i>
+                <span id="clinicsTrend">0</span> activas
+            </div>
+        </div>
+
+        <!-- Total Usuarios -->
+        <div class="admin-stat-card success">
+            <div class="stat-header">
+                <div class="stat-icon-large success">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+            <div class="stat-value-large" id="totalUsers">0</div>
+            <div class="stat-label-large">Usuarios del Sistema</div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i>
+                <span id="usersTrend">0</span> profesionales
+            </div>
+        </div>
+
+        <!-- Total Citas -->
+        <div class="admin-stat-card warning">
+            <div class="stat-header">
+                <div class="stat-icon-large warning">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+            </div>
+            <div class="stat-value-large" id="totalAppointments">0</div>
+            <div class="stat-label-large">Citas Totales</div>
+            <div class="stat-trend up">
+                <i class="fas fa-arrow-up"></i>
+                <span id="appointmentsTrend">0</span> últimos 30 días
+            </div>
+        </div>
+
+        <!-- Total Pacientes -->
+        <div class="admin-stat-card danger">
+            <div class="stat-header">
+                <div class="stat-icon-large danger">
+                    <i class="fas fa-user-injured"></i>
+                </div>
+            </div>
+            <div class="stat-value-large" id="totalPatients">0</div>
+            <div class="stat-label-large">Pacientes Registrados</div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CLINICS TABLE -->
+    <!-- ============================================================ -->
+    <div class="clinics-section">
+        <div class="section-header">
+            <h4>
+                <i class="fas fa-hospital me-2"></i>
+                Clínicas Registradas
+            </h4>
+            <div>
+                <button class="btn btn-success" onclick="openCreateClinicModal()">
+                    <i class="fas fa-plus me-2"></i>Nueva Clínica
+                </button>
+                <button class="btn btn-primary" onclick="loadClinics()">
+                    <i class="fas fa-sync me-2"></i>Actualizar
+                </button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table clinics-table" id="clinicsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Clínica</th>
+                        <th>Plan</th>
+                        <th>Usuarios</th>
+                        <th>Pacientes</th>
+                        <th>Citas</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="clinicsTableBody">
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: CREATE CLINIC -->
+<!-- ============================================================ -->
+<div class="modal fade" id="createClinicModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header super-admin">
+                <h5 class="modal-title">
+                    <i class="fas fa-hospital-alt me-2"></i>Crear Nueva Clínica
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createClinicForm">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Se creará la clínica y el usuario <strong>CLINIC_ADMIN</strong> automáticamente.
+                    </div>
+
+                    <h6 class="mb-3">Información de la Clínica</h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="clinic_name" class="form-label">
+                                <i class="fas fa-hospital me-1"></i>Nombre de la Clínica *
+                            </label>
+                            <input type="text" class="form-control" id="clinic_name" 
+                                   placeholder="Ej: Clínica Salud Total" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="clinic_phone" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Teléfono
+                            </label>
+                            <input type="tel" class="form-control" id="clinic_phone" 
+                                   placeholder="+51 999 888 777">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="clinic_email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i>Email
+                        </label>
+                        <input type="email" class="form-control" id="clinic_email" 
+                               placeholder="contacto@clinica.com">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="clinic_address" class="form-label">
+                            <i class="fas fa-map-marker-alt me-1"></i>Dirección
+                        </label>
+                        <input type="text" class="form-control" id="clinic_address" 
+                               placeholder="Av. Principal 123, Lima">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="clinic_plan" class="form-label">
+                                <i class="fas fa-tag me-1"></i>Plan
+                            </label>
+                            <select class="form-select" id="clinic_plan">
+                                <option value="free" selected>Free</option>
+                                <option value="basic">Basic</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="clinic_theme_color" class="form-label">
+                                <i class="fas fa-palette me-1"></i>Color de Tema
+                            </label>
+                            <input type="color" class="form-control form-control-color" 
+                                   id="clinic_theme_color" value="#4F46E5">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h6 class="mb-3">Credenciales del Administrador</h6>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="admin_username" class="form-label">
+                                <i class="fas fa-user me-1"></i>Username *
+                            </label>
+                            <input type="text" class="form-control" id="admin_username" 
+                                   placeholder="admin_clinica" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="admin_email" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email *
+                            </label>
+                            <input type="email" class="form-control" id="admin_email" 
+                                   placeholder="admin@clinica.com" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="admin_full_name" class="form-label">
+                                <i class="fas fa-id-card me-1"></i>Nombre Completo
+                            </label>
+                            <input type="text" class="form-control" id="admin_full_name" 
+                                   placeholder="Juan Pérez">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="admin_phone" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Teléfono
+                            </label>
+                            <input type="tel" class="form-control" id="admin_phone" 
+                                   placeholder="+51 987 654 321">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="admin_password" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Contraseña *
+                        </label>
+                        <input type="password" class="form-control" id="admin_password" 
+                               placeholder="Mínimo 6 caracteres" required>
+                        <small class="text-muted">Esta contraseña será enviada al administrador</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveClinic()">
+                    <i class="fas fa-save me-1"></i>Crear Clínica
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: CREDENTIALS DISPLAY -->
+<!-- ============================================================ -->
+<div class="modal fade" id="credentialsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>Clínica Creada Exitosamente
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>IMPORTANTE:</strong> Guarda estas credenciales. No se volverán a mostrar.
+                </div>
+
+                <div class="credentials-display" id="credentialsDisplay">
+                    <!-- Se llenará dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="copyCredentials()">
+                    <i class="fas fa-copy me-1"></i>Copiar al Portapapeles
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/super_admin.js') }}"></script>
+{% endblock %}
