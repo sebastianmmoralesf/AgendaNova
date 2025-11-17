@@ -1,0 +1,1354 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Administración - AgendaNova{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================ */
+    /* CLINIC ADMIN DASHBOARD - ESTILOS ESPECÍFICOS */
+    /* ============================================================ */
+    .clinic-admin-container {
+        max-width: 1600px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    /* ============================================================ */
+    /* HEADER */
+    /* ============================================================ */
+    .clinic-admin-header {
+        background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(79, 70, 229, 0.3);
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .clinic-admin-header h2 {
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .clinic-admin-header .clinic-logo-header {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        background: white;
+    }
+
+    .clinic-admin-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.95;
+    }
+
+    /* ============================================================ */
+    /* STATS CARDS */
+    /* ============================================================ */
+    .admin-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .admin-stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        animation: fadeIn 0.8s ease-out;
+        border-left: 4px solid var(--primary);
+    }
+
+    .admin-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .admin-stat-card:nth-child(2) {
+        border-left-color: var(--success);
+    }
+
+    .admin-stat-card:nth-child(3) {
+        border-left-color: var(--warning);
+    }
+
+    .admin-stat-card:nth-child(4) {
+        border-left-color: var(--info);
+    }
+
+    .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon-medium {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .stat-icon-medium.primary {
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary);
+    }
+
+    .stat-icon-medium.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .stat-icon-medium.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .stat-icon-medium.info {
+        background: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+    }
+
+    .stat-value-medium {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+        line-height: 1;
+    }
+
+    .stat-label-medium {
+        color: var(--gray);
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+
+    /* ============================================================ */
+    /* MAIN CONTENT WRAPPER */
+    /* ============================================================ */
+    .content-wrapper {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 1s ease-out;
+    }
+
+    /* ============================================================ */
+    /* TABS */
+    /* ============================================================ */
+    .nav-tabs {
+        border-bottom: 2px solid var(--border);
+        margin-bottom: 2rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+        border-radius: 8px 8px 0 0;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: var(--primary);
+        background: rgba(79, 70, 229, 0.05);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary);
+        background: none;
+    }
+
+    .nav-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary);
+        border-radius: 3px 3px 0 0;
+    }
+
+    .nav-tabs .nav-link i {
+        font-size: 1.1rem;
+    }
+
+    .tab-content {
+        padding-top: 1rem;
+    }
+
+    /* ============================================================ */
+    /* TAB HEADERS */
+    /* ============================================================ */
+    .tab-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .tab-header h4 {
+        margin: 0;
+        color: var(--dark);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .tab-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    /* ============================================================ */
+    /* TABLES */
+    /* ============================================================ */
+    .data-table {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .data-table thead {
+        background: var(--light);
+    }
+
+    .data-table th {
+        font-weight: 600;
+        color: var(--dark);
+        border: none;
+        padding: 1rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .data-table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .data-table tbody tr {
+        transition: background 0.2s ease;
+    }
+
+    .data-table tbody tr:hover {
+        background: var(--light);
+    }
+
+    /* ============================================================ */
+    /* USER/PROFESSIONAL CARDS */
+    /* ============================================================ */
+    .user-info-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .user-avatar {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+
+    .user-details h6 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .user-details small {
+        color: var(--gray);
+        font-size: 0.8rem;
+    }
+
+    /* ============================================================ */
+    /* STATUS BADGES */
+    /* ============================================================ */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .status-badge.active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+    }
+
+    .status-badge.inactive {
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+    }
+
+    .status-badge::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* ============================================================ */
+    /* ACTION BUTTONS */
+    /* ============================================================ */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-action-sm {
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: none;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .btn-action-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .btn-action-sm i {
+        font-size: 0.875rem;
+    }
+
+    /* ============================================================ */
+    /* EMPTY STATES */
+    /* ============================================================ */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--gray);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .empty-state h5 {
+        color: var(--dark);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    /* ============================================================ */
+    /* REPORTS SECTION */
+    /* ============================================================ */
+    .report-card {
+        background: white;
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .report-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+    }
+
+    .report-card h5 {
+        color: var(--dark);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .date-range-inputs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .date-range-inputs .form-control {
+        flex: 1;
+    }
+
+    /* ============================================================ */
+    /* CONFIGURATION SECTION */
+    /* ============================================================ */
+    .config-section {
+        background: var(--light);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .config-section h5 {
+        color: var(--dark);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .color-preview {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        border: 2px solid var(--border);
+    }
+
+    /* ============================================================ */
+    /* CALENDAR SECTION */
+    /* ============================================================ */
+    .calendar-filters {
+        background: var(--light);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .calendar-filters label {
+        font-weight: 600;
+        color: var(--dark);
+        margin: 0;
+    }
+
+    .calendar-filters select {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    /* ============================================================ */
+    /* LOADING SPINNER */
+    /* ============================================================ */
+    .loading-container {
+        text-align: center;
+        padding: 3rem 1rem;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    /* ============================================================ */
+    /* RESPONSIVE */
+    /* ============================================================ */
+    @media (max-width: 768px) {
+        .clinic-admin-header {
+            padding: 1.5rem;
+        }
+
+        .admin-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .content-wrapper {
+            padding: 1rem;
+        }
+
+        .nav-tabs .nav-link {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .tab-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .tab-actions {
+            width: 100%;
+        }
+
+        .tab-actions .btn {
+            flex: 1;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-action-sm {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .date-range-inputs {
+            flex-direction: column;
+        }
+
+        .calendar-filters {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .calendar-filters select {
+            width: 100%;
+        }
+    }
+
+    /* ============================================================ */
+    /* DARK MODE */
+    /* ============================================================ */
+    [data-theme="dark"] .clinic-admin-header {
+        background: linear-gradient(135deg, #3730a3 0%, #4338ca 100%);
+    }
+
+    [data-theme="dark"] .admin-stat-card,
+    [data-theme="dark"] .content-wrapper,
+    [data-theme="dark"] .report-card {
+        background: #1e293b;
+    }
+
+    [data-theme="dark"] .data-table thead,
+    [data-theme="dark"] .config-section,
+    [data-theme="dark"] .calendar-filters {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .data-table tbody tr:hover {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .report-card {
+        border-color: #334155;
+    }
+
+    [data-theme="dark"] .report-card:hover {
+        border-color: var(--primary);
+    }
+</style>
+
+<!-- FullCalendar CSS -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+{% endblock %}
+
+{% block content %}
+<div class="clinic-admin-container">
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <div class="clinic-admin-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-3">
+                {% if clinic.logo_url %}
+                <img src="{{ clinic.logo_url }}" alt="{{ clinic.name }}" class="clinic-logo-header">
+                {% else %}
+                <div class="stat-icon-medium primary" style="width: 60px; height: 60px; font-size: 2rem;">
+                    <i class="fas fa-hospital"></i>
+                </div>
+                {% endif %}
+                <div>
+                    <h2>Panel de Administración</h2>
+                    <p class="mb-0">{{ clinic.name }}</p>
+                </div>
+            </div>
+            <div>
+                <span class="badge bg-light text-primary px-3 py-2" style="font-size: 0.9rem;">
+                    <i class="fas fa-user-shield me-1"></i>Administrador
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATISTICS CARDS -->
+    <!-- ============================================================ -->
+    <div class="admin-stats-grid" id="statsContainer">
+        <div class="admin-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-medium primary">
+                    <i class="fas fa-user-md"></i>
+                </div>
+            </div>
+            <div class="stat-value-medium" id="statProfessionals">0</div>
+            <div class="stat-label-medium">Profesionales</div>
+        </div>
+
+        <div class="admin-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-medium success">
+                    <i class="fas fa-user-injured"></i>
+                </div>
+            </div>
+            <div class="stat-value-medium" id="statPatients">0</div>
+            <div class="stat-label-medium">Pacientes</div>
+        </div>
+
+        <div class="admin-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-medium warning">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+            </div>
+            <div class="stat-value-medium" id="statAppointments">0</div>
+            <div class="stat-label-medium">Citas Programadas</div>
+        </div>
+
+        <div class="admin-stat-card">
+            <div class="stat-header">
+                <div class="stat-icon-medium info">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+            </div>
+            <div class="stat-value-medium" id="statServices">0</div>
+            <div class="stat-label-medium">Servicios Activos</div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- MAIN CONTENT (TABS) -->
+    <!-- ============================================================ -->
+    <div class="content-wrapper">
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" 
+                        data-bs-target="#overview-pane" type="button" role="tab">
+                    <i class="fas fa-chart-line"></i>Resumen
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="professionals-tab" data-bs-toggle="tab" 
+                        data-bs-target="#professionals-pane" type="button" role="tab">
+                    <i class="fas fa-user-md"></i>Profesionales
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="services-tab" data-bs-toggle="tab" 
+                        data-bs-target="#services-pane" type="button" role="tab">
+                    <i class="fas fa-stethoscope"></i>Servicios
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="calendar-tab" data-bs-toggle="tab" 
+                        data-bs-target="#calendar-pane" type="button" role="tab">
+                    <i class="fas fa-calendar-alt"></i>Calendario
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="reports-tab" data-bs-toggle="tab" 
+                        data-bs-target="#reports-pane" type="button" role="tab">
+                    <i class="fas fa-file-alt"></i>Reportes
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="config-tab" data-bs-toggle="tab" 
+                        data-bs-target="#config-pane" type="button" role="tab">
+                    <i class="fas fa-cog"></i>Configuración
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tabs Content -->
+        <div class="tab-content" id="adminTabContent">
+            
+            <!-- ======================================================== -->
+            <!-- TAB 1: OVERVIEW / RESUMEN -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade show active" id="overview-pane" role="tabpanel">
+                <div class="tab-header">
+                    <h4><i class="fas fa-chart-line me-2"></i>Resumen General</h4>
+                </div>
+
+                <div class="row">
+                    <!-- Actividad Reciente -->
+                    <div class="col-md-6 mb-4">
+                        <div class="config-section">
+                            <h5><i class="fas fa-history me-2"></i>Actividad Reciente</h5>
+                            <div id="recentActivityContainer">
+                                <div class="loading-container">
+                                    <div class="spinner-border text-primary"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profesionales con más citas -->
+                    <div class="col-md-6 mb-4">
+                        <div class="config-section">
+                            <h5><i class="fas fa-trophy me-2"></i>Top Profesionales</h5>
+                            <div id="topProfessionalsContainer">
+                                <div class="loading-container">
+                                    <div class="spinner-border text-primary"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Citas de Hoy -->
+                <div class="config-section">
+                    <h5><i class="fas fa-calendar-day me-2"></i>Citas de Hoy</h5>
+                    <div id="todayAppointmentsContainer">
+                        <div class="loading-container">
+                            <div class="spinner-border text-primary"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- TAB 2: PROFESSIONALS -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="professionals-pane" role="tabpanel">
+                <div class="tab-header">
+                    <h4><i class="fas fa-user-md me-2"></i>Gestión de Profesionales</h4>
+                    <div class="tab-actions">
+                        <button class="btn btn-success" onclick="openCreateProfessionalModal()">
+                            <i class="fas fa-plus me-2"></i>Nuevo Profesional
+                        </button>
+                        <button class="btn btn-primary" onclick="loadProfessionals()">
+                            <i class="fas fa-sync me-2"></i>Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Gestiona tu equipo:</strong> Crea, edita y administra las cuentas de los profesionales de tu clínica.
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table data-table" id="professionalsTable">
+                        <thead>
+                            <tr>
+                                <th>Profesional</th>
+                                <th>Email</th>
+                                <th>Teléfono</th>
+                                <th>Citas</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="professionalsTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="spinner-border text-primary"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- TAB 3: SERVICES -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="services-pane" role="tabpanel">
+                <div class="tab-header">
+                    <h4><i class="fas fa-stethoscope me-2"></i>Gestión de Servicios</h4>
+                    <div class="tab-actions">
+                        <button class="btn btn-success" onclick="openCreateServiceModal()">
+                            <i class="fas fa-plus me-2"></i>Nuevo Servicio
+                        </button>
+                        <button class="btn btn-primary" onclick="loadServices()">
+                            <i class="fas fa-sync me-2"></i>Actualizar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Define tus servicios:</strong> Configura los servicios que ofrece tu clínica con duración y precio.
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table data-table" id="servicesTable">
+                        <thead>
+                            <tr>
+                                <th>Servicio</th>
+                                <th>Descripción</th>
+                                <th>Duración</th>
+                                <th>Precio</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="servicesTableBody">
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="spinner-border text-primary"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- TAB 4: CALENDAR -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="calendar-pane" role="tabpanel">
+                <div class="tab-header">
+                    <h4><i class="fas fa-calendar-alt me-2"></i>Calendario Global de la Clínica</h4>
+                </div>
+
+                <!-- Filtros -->
+                <div class="calendar-filters">
+                    <label for="filterProfessional">
+                        <i class="fas fa-filter me-1"></i>Filtrar por Profesional:
+                    </label>
+                    <select class="form-select" id="filterProfessional" onchange="filterCalendarByProfessional()">
+                        <option value="">Todos los profesionales</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="clearCalendarFilter()">
+                        <i class="fas fa-times me-1"></i>Limpiar Filtro
+                    </button>
+                </div>
+
+                <!-- Calendar Container -->
+                <div id="clinicCalendarContainer"></div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- TAB 5: REPORTS -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="reports-pane" role="tabpanel">
+                <div class="tab-header">
+                    <h4><i class="fas fa-file-alt me-2"></i>Reportes y Estadísticas</h4>
+                </div>
+
+                <!-- Reporte 1: Resumen de Citas -->
+                <div class="report-card">
+                    <h5><i class="fas fa-calendar-check me-2"></i>Resumen de Citas por Período</h5>
+                    <div class="date-range-inputs">
+                        <div>
+                            <label for="reportStartDate" class="form-label">Fecha Inicio</label>
+                            <input type="date" class="form-control" id="reportStartDate">
+                        </div>
+                        <div>
+                            <label for="reportEndDate" class="form-label">Fecha Fin</label>
+                            <input type="date" class="form-control" id="reportEndDate">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateAppointmentReport()">
+                        <i class="fas fa-chart-bar me-2"></i>Generar Reporte
+                    </button>
+                    <button class="btn btn-success" onclick="exportAppointmentsCSV()">
+                        <i class="fas fa-file-csv me-2"></i>Exportar CSV
+                    </button>
+
+                    <!-- Resultado del Reporte -->
+                    <div id="appointmentReportResult" class="mt-4" style="display: none;">
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h4 class="mb-0" id="reportTotal">0</h4>
+                                    <small class="text-muted">Total Citas</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h4 class="mb-0 text-success" id="reportCompletadas">0</h4>
+                                    <small class="text-muted">Completadas</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h4 class="mb-0 text-danger" id="reportCanceladas">0</h4>
+                                    <small class="text-muted">Canceladas</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <div class="text-center p-3 bg-light rounded">
+                                    <h4 class="mb-0 text-warning" id="reportIngresos">S/ 0</h4>
+                                    <small class="text-muted">Ingresos Est.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Citas por Profesional -->
+                        <div class="mt-3">
+                            <h6>Citas por Profesional:</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Profesional</th>
+                                            <th>Citas</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reportByProfessional">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reporte 2: Desempeño de Profesionales -->
+                <div class="report-card">
+                    <h5><i class="fas fa-users me-2"></i>Desempeño de Profesionales</h5>
+                    <p class="text-muted">Métricas de rendimiento de tu equipo en el último mes</p>
+                    <button class="btn btn-primary" onclick="generatePerformanceReport()">
+                        <i class="fas fa-chart-line me-2"></i>Generar Reporte
+                    </button>
+
+                    <!-- Resultado del Reporte -->
+                    <div id="performanceReportResult" class="mt-4" style="display: none;">
+                        <hr>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Profesional</th>
+                                        <th>Total Citas</th>
+                                        <th>Completadas</th>
+                                        <th>Canceladas</th>
+                                        <th>Tasa Éxito</th>
+                                        <th>Pacientes Atendidos</th>
+                                        <th>Ingresos</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="performanceTableBody">
+                                    <!-- Se llenará dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- TAB 6: CONFIGURATION -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="config-pane" role="tabpanel">
+                <div class="tab-header">
+                    <h4><i class="fas fa-cog me-2"></i>Configuración de la Clínica</h4>
+                </div>
+
+                <form id="clinicConfigForm">
+                    <!-- Información General -->
+                    <div class="config-section">
+                        <h5><i class="fas fa-info-circle me-2"></i>Información General</h5>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="configClinicName" class="form-label">
+                                    <i class="fas fa-hospital me-1"></i>Nombre de la Clínica *
+                                </label>
+                                <input type="text" class="form-control" id="configClinicName" 
+                                       value="{{ clinic.name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="configClinicPhone" class="form-label">
+                                    <i class="fas fa-phone me-1"></i>Teléfono
+                                </label>
+                                <input type="tel" class="form-control" id="configClinicPhone" 
+                                       value="{{ clinic.phone or '' }}" placeholder="+51 999 888 777">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="configClinicEmail" class="form-label">
+                                    <i class="fas fa-envelope me-1"></i>Email
+                                </label>
+                                <input type="email" class="form-control" id="configClinicEmail" 
+                                       value="{{ clinic.email or '' }}" placeholder="contacto@clinica.com">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="configClinicAddress" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>Dirección
+                                </label>
+                                <input type="text" class="form-control" id="configClinicAddress" 
+                                       value="{{ clinic.address or '' }}" placeholder="Av. Principal 123">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Personalización -->
+                    <div class="config-section">
+                        <h5><i class="fas fa-palette me-2"></i>Personalización</h5>
+                        <div class="row align-items-center">
+                            <div class="col-md-6 mb-3">
+                                <label for="configLogoUrl" class="form-label">
+                                    <i class="fas fa-image me-1"></i>URL del Logo
+                                </label>
+                                <input type="url" class="form-control" id="configLogoUrl" 
+                                       value="{{ clinic.logo_url or '' }}" 
+                                       placeholder="https://example.com/logo.png">
+                                <small class="text-muted">Sube tu logo a un servicio como Imgur o similar y pega la URL aquí</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="configThemeColor" class="form-label">
+                                    <i class="fas fa-palette me-1"></i>Color de Tema
+                                </label>
+                                <div class="d-flex gap-2 align-items-center">
+                                    <input type="color" class="form-control form-control-color" 
+                                           id="configThemeColor" value="{{ clinic.theme_color }}" 
+                                           style="width: 80px;">
+                                    <div class="color-preview" id="colorPreview" 
+                                         style="background-color: {{ clinic.theme_color }}"></div>
+                                    <button type="button" class="btn btn-sm btn-secondary" 
+                                            onclick="resetThemeColor()">
+                                        Restablecer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vista Previa del Logo -->
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label">Vista Previa del Logo:</label>
+                                <div class="p-3 bg-light rounded text-center">
+                                    <img id="logoPreview" 
+                                         src="{{ clinic.logo_url or 'https://via.placeholder.com/150x150?text=Sin+Logo' }}" 
+                                         alt="Logo Preview" 
+                                         style="max-width: 150px; max-height: 150px; border-radius: 8px;">
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    El logo se mostrará en el header y en el login de tu clínica
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Plan Actual (Solo Lectura) -->
+                    <div class="config-section">
+                        <h5><i class="fas fa-tag me-2"></i>Plan Actual</h5>
+                        <div class="alert alert-info">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Plan:</strong> 
+                                    <span class="badge bg-primary ms-2" style="font-size: 1rem;">
+                                        {{ clinic.plan.upper() }}
+                                    </span>
+                                </div>
+                                <div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Para cambiar de plan, contacta al Super Administrador
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción -->
+                    <div class="d-flex gap-2 justify-content-end">
+                        <button type="button" class="btn btn-secondary" onclick="resetConfigForm()">
+                            <i class="fas fa-undo me-1"></i>Descartar Cambios
+                        </button>
+                        <button type="button" class="btn btn-primary" onclick="saveClinicConfig()">
+                            <i class="fas fa-save me-1"></i>Guardar Configuración
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: CREATE/EDIT PROFESSIONAL -->
+<!-- ============================================================ -->
+<div class="modal fade" id="professionalModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="professionalModalTitle">
+                    <i class="fas fa-user-md me-2"></i>Nuevo Profesional
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="professionalForm">
+                    <input type="hidden" id="professionalId">
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Al crear el profesional, se generará automáticamente una cuenta para que pueda iniciar sesión.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="professionalUsername" class="form-label">
+                                <i class="fas fa-user me-1"></i>Username *
+                            </label>
+                            <input type="text" class="form-control" id="professionalUsername" 
+                                   placeholder="dr_garcia" required>
+                            <small class="text-muted">Será usado para iniciar sesión</small>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="professionalEmail" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email *
+                            </label>
+                            <input type="email" class="form-control" id="professionalEmail" 
+                                   placeholder="dr.garcia@clinica.com" required>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="professionalFullName" class="form-label">
+                                <i class="fas fa-id-card me-1"></i>Nombre Completo *
+                            </label>
+                            <input type="text" class="form-control" id="professionalFullName" 
+                                   placeholder="Dr. Juan García López" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="professionalPhone" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Teléfono
+                            </label>
+                            <input type="tel" class="form-control" id="professionalPhone" 
+                                   placeholder="+51 987 654 321">
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="passwordFieldContainer">
+                        <label for="professionalPassword" class="form-label">
+                            <i class="fas fa-lock me-1"></i>Contraseña *
+                        </label>
+                        <input type="password" class="form-control" id="professionalPassword" 
+                               placeholder="Mínimo 6 caracteres" required>
+                        <small class="text-muted">Esta contraseña será entregada al profesional</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveProfessional()">
+                    <i class="fas fa-save me-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: PROFESSIONAL CREDENTIALS -->
+<!-- ============================================================ -->
+<div class="modal fade" id="credentialsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-circle me-2"></i>Profesional Creado
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>IMPORTANTE:</strong> Guarda estas credenciales y compártelas con el profesional. No se volverán a mostrar.
+                </div>
+
+                <div class="card">
+                    <div class="card-body" id="credentialsDisplay">
+                        <!-- Se llenará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="copyProfessionalCredentials()">
+                    <i class="fas fa-copy me-1"></i>Copiar al Portapapeles
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: CREATE/EDIT SERVICE -->
+<!-- ============================================================ -->
+<div class="modal fade" id="serviceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="serviceModalTitle">
+                    <i class="fas fa-stethoscope me-2"></i>Nuevo Servicio
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="serviceForm">
+                    <input type="hidden" id="serviceId">
+
+                    <div class="mb-3">
+                        <label for="serviceName" class="form-label">
+                            <i class="fas fa-tag me-1"></i>Nombre del Servicio *
+                        </label>
+                        <input type="text" class="form-control" id="serviceName" 
+                               placeholder="Ej: Consulta General" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="serviceDescription" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>Descripción
+                        </label>
+                        <textarea class="form-control" id="serviceDescription" rows="3" 
+                                  placeholder="Descripción del servicio..."></textarea>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="serviceDuration" class="form-label">
+                                <i class="fas fa-clock me-1"></i>Duración (minutos) *
+                            </label>
+                            <input type="number" class="form-control" id="serviceDuration" 
+                                   placeholder="30" min="5" step="5" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="servicePrice" class="form-label">
+                                <i class="fas fa-dollar-sign me-1"></i>Precio (S/)
+                            </label>
+                            <input type="number" class="form-control" id="servicePrice" 
+                                   placeholder="100.00" min="0" step="0.01">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveService()">
+                    <i class="fas fa-save me-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+
+<!-- Clinic Admin Logic -->
+<script src="{{ url_for('static', filename='js/clinic_admin.js') }}"></script>
+
+<!-- Tab Event Handlers -->
+<script>
+    // Cargar datos al cambiar de tab
+    document.getElementById('professionals-tab')?.addEventListener('shown.bs.tab', function() {
+        loadProfessionals();
+    });
+
+    document.getElementById('services-tab')?.addEventListener('shown.bs.tab', function() {
+        loadServices();
+    });
+
+    document.getElementById('calendar-tab')?.addEventListener('shown.bs.tab', function() {
+        initializeClinicCalendar();
+        loadProfessionalsForFilter();
+    });
+
+    document.getElementById('overview-tab')?.addEventListener('shown.bs.tab', function() {
+        loadOverviewData();
+    });
+
+    // Preview del logo al cambiar URL
+    document.getElementById('configLogoUrl')?.addEventListener('input', function() {
+        const logoPreview = document.getElementById('logoPreview');
+        const url = this.value.trim();
+        
+        if (url) {
+            logoPreview.src = url;
+            logoPreview.onerror = function() {
+                this.src = 'https://via.placeholder.com/150x150?text=URL+Invalida';
+            };
+        } else {
+            logoPreview.src = 'https://via.placeholder.com/150x150?text=Sin+Logo';
+        }
+    });
+
+    // Preview del color al cambiar
+    document.getElementById('configThemeColor')?.addEventListener('input', function() {
+        const colorPreview = document.getElementById('colorPreview');
+        colorPreview.style.backgroundColor = this.value;
+    });
+
+    // Función para resetear color
+    function resetThemeColor() {
+        document.getElementById('configThemeColor').value = '#4F46E5';
+        document.getElementById('colorPreview').style.backgroundColor = '#4F46E5';
+    }
+
+    // Función para resetear formulario de config
+    function resetConfigForm() {
+        if (confirm('¿Descartar todos los cambios realizados?')) {
+            location.reload();
+        }
+    }
+
+    // Establecer fechas por defecto en reportes (último mes)
+    document.addEventListener('DOMContentLoaded', function() {
+        const today = new Date();
+        const lastMonth = new Date(today);
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+
+        const formatDate = (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
+        const startInput = document.getElementById('reportStartDate');
+        const endInput = document.getElementById('reportEndDate');
+
+        if (startInput && endInput) {
+            startInput.value = formatDate(lastMonth);
+            endInput.value = formatDate(today);
+        }
+    });
+</script>
+{% endblock %}

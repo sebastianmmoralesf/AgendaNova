@@ -1,0 +1,1512 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Cuenta - AgendaNova{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ============================================================ */
+    /* ACCOUNT SETTINGS - ESTILOS ESPECÍFICOS */
+    /* ============================================================ */
+    .account-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    /* ============================================================ */
+    /* HEADER */
+    /* ============================================================ */
+    .account-header {
+        background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+        color: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .account-header h2 {
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .account-header p {
+        margin: 0.5rem 0 0 0;
+        opacity: 0.95;
+    }
+
+    /* ============================================================ */
+    /* USER PROFILE CARD */
+    /* ============================================================ */
+    .profile-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    .profile-avatar-section {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding-bottom: 2rem;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366F1, #8B5CF6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        font-weight: 700;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
+    }
+
+    .profile-info h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--dark);
+        font-weight: 700;
+    }
+
+    .profile-info .role-badge-large {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .role-badge-large.super-admin {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc3545;
+    }
+
+    .role-badge-large.clinic-admin {
+        background: rgba(79, 70, 229, 0.1);
+        color: #4F46E5;
+    }
+
+    .role-badge-large.professional {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10B981;
+    }
+
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .profile-stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: var(--light);
+        border-radius: 12px;
+    }
+
+    .profile-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .profile-stat-label {
+        font-size: 0.875rem;
+        color: var(--gray);
+        margin-top: 0.25rem;
+    }
+
+    /* ============================================================ */
+    /* SETTINGS SECTIONS */
+    /* ============================================================ */
+    .settings-section {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+        animation: fadeIn 1s ease-out;
+    }
+
+    .settings-section h4 {
+        color: var(--dark);
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid var(--border);
+    }
+
+    .settings-section h4 i {
+        color: var(--primary);
+        font-size: 1.5rem;
+    }
+
+    /* ============================================================ */
+    /* FORM ELEMENTS */
+    /* ============================================================ */
+    .form-group-custom {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group-custom label {
+        font-weight: 600;
+        color: var(--dark);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-group-custom label i {
+        color: var(--primary);
+    }
+
+    .form-control-custom {
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control-custom:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+        outline: none;
+    }
+
+    .form-control-custom:disabled {
+        background-color: #f8f9fa;
+        cursor: not-allowed;
+    }
+
+    /* ============================================================ */
+    /* PASSWORD STRENGTH METER */
+    /* ============================================================ */
+    .password-strength {
+        margin-top: 0.5rem;
+    }
+
+    .password-strength-bar {
+        height: 4px;
+        background: var(--border);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+
+    .password-strength-fill {
+        height: 100%;
+        width: 0%;
+        transition: all 0.3s ease;
+    }
+
+    .password-strength-fill.weak {
+        width: 33%;
+        background: #dc3545;
+    }
+
+    .password-strength-fill.medium {
+        width: 66%;
+        background: #f59e0b;
+    }
+
+    .password-strength-fill.strong {
+        width: 100%;
+        background: #10b981;
+    }
+
+    .password-strength-text {
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .password-strength-text.weak {
+        color: #dc3545;
+    }
+
+    .password-strength-text.medium {
+        color: #f59e0b;
+    }
+
+    .password-strength-text.strong {
+        color: #10b981;
+    }
+
+    /* ============================================================ */
+    /* PREFERENCES */
+    /* ============================================================ */
+    .preference-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1.25rem;
+        background: var(--light);
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .preference-item:hover {
+        background: #e5e7eb;
+        transform: translateX(5px);
+    }
+
+    .preference-info {
+        flex: 1;
+    }
+
+    .preference-info h6 {
+        margin: 0 0 0.25rem 0;
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    .preference-info p {
+        margin: 0;
+        color: var(--gray);
+        font-size: 0.875rem;
+    }
+
+    .preference-toggle {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    /* Toggle Switch */
+    .toggle-switch {
+        position: relative;
+        width: 60px;
+        height: 30px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 30px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 22px;
+        width: 22px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+        background-color: var(--primary);
+    }
+
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(30px);
+    }
+
+    /* ============================================================ */
+    /* ACTION BUTTONS */
+    /* ============================================================ */
+    .action-buttons-section {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        margin-top: 2rem;
+    }
+
+    .btn-custom {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        border: none;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ============================================================ */
+    /* INFO BOXES */
+    /* ============================================================ */
+    .info-box {
+        padding: 1rem;
+        border-radius: 12px;
+        margin-bottom: 1.5rem;
+        display: flex;
+        gap: 1rem;
+        align-items: start;
+    }
+
+    .info-box.warning {
+        background: rgba(245, 158, 11, 0.1);
+        border-left: 4px solid #f59e0b;
+    }
+
+    .info-box.info {
+        background: rgba(59, 130, 246, 0.1);
+        border-left: 4px solid #3b82f6;
+    }
+
+    .info-box.success {
+        background: rgba(16, 185, 129, 0.1);
+        border-left: 4px solid #10b981;
+    }
+
+    .info-box i {
+        font-size: 1.5rem;
+        margin-top: 0.25rem;
+    }
+
+    .info-box.warning i {
+        color: #f59e0b;
+    }
+
+    .info-box.info i {
+        color: #3b82f6;
+    }
+
+    .info-box.success i {
+        color: #10b981;
+    }
+
+    .info-box-content h6 {
+        margin: 0 0 0.5rem 0;
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    .info-box-content p {
+        margin: 0;
+        color: var(--gray);
+        font-size: 0.875rem;
+    }
+
+    /* ============================================================ */
+    /* DANGER ZONE */
+    /* ============================================================ */
+    .danger-zone {
+        background: white;
+        border: 2px solid #dc3545;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .danger-zone h4 {
+        color: #dc3545;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .danger-zone-content {
+        padding: 1.5rem;
+        background: rgba(220, 38, 38, 0.05);
+        border-radius: 12px;
+    }
+
+    /* ============================================================ */
+    /* LOADING STATE */
+    /* ============================================================ */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .loading-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        text-align: center;
+    }
+
+    /* ============================================================ */
+    /* RESPONSIVE */
+    /* ============================================================ */
+    @media (max-width: 768px) {
+        .account-header {
+            padding: 1.5rem;
+        }
+
+        .profile-avatar-section {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .profile-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .settings-section {
+            padding: 1.5rem;
+        }
+
+        .action-buttons-section {
+            flex-direction: column;
+        }
+
+        .btn-custom {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .preference-item {
+            flex-direction: column;
+            gap: 1rem;
+            text-align: center;
+        }
+    }
+
+    /* ============================================================ */
+    /* DARK MODE */
+    /* ============================================================ */
+    [data-theme="dark"] .account-header {
+        background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
+    }
+
+    [data-theme="dark"] .profile-card,
+    [data-theme="dark"] .settings-section {
+        background: #1e293b;
+    }
+
+    [data-theme="dark"] .profile-stat-item,
+    [data-theme="dark"] .preference-item {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .info-box.warning {
+        background: rgba(245, 158, 11, 0.2);
+    }
+
+    [data-theme="dark"] .info-box.info {
+        background: rgba(59, 130, 246, 0.2);
+    }
+
+    [data-theme="dark"] .info-box.success {
+        background: rgba(16, 185, 129, 0.2);
+    }
+
+    [data-theme="dark"] .danger-zone {
+        background: #1e293b;
+    }
+
+    [data-theme="dark"] .danger-zone-content {
+        background: rgba(220, 38, 38, 0.15);
+    }
+
+    /* ============================================================ */
+    /* ANIMATIONS */
+    /* ============================================================ */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="account-container">
+    <!-- ============================================================ -->
+    <!-- HEADER -->
+    <!-- ============================================================ -->
+    <div class="account-header">
+        <h2>
+            <i class="fas fa-user-circle"></i>
+            Mi Cuenta
+        </h2>
+        <p>Gestiona tu información personal y preferencias</p>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PROFILE CARD -->
+    <!-- ============================================================ -->
+    <div class="profile-card">
+        <div class="profile-avatar-section">
+            <div class="profile-avatar-large">
+                {{ (user.full_name or user.username)[0].upper() }}
+            </div>
+            <div class="profile-info">
+                <h3>{{ user.full_name or user.username }}</h3>
+                <span class="role-badge-large {{ user.role.value.lower().replace('_', '-') }}">
+                    <i class="fas {% if user.is_super_admin() %}fa-crown{% elif user.is_clinic_admin() %}fa-user-shield{% else %}fa-user-md{% endif %}"></i>
+                    {% if user.is_super_admin() %}
+                        Super Administrador
+                    {% elif user.is_clinic_admin() %}
+                        Administrador de Clínica
+                    {% elif user.is_professional() %}
+                        Profesional
+                    {% endif %}
+                </span>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <i class="fas fa-envelope me-1"></i>{{ user.email }}
+                    </small>
+                </div>
+                {% if user.clinic %}
+                <div class="mt-1">
+                    <small class="text-muted">
+                        <i class="fas fa-hospital me-1"></i>{{ user.clinic.name }}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Profile Stats -->
+        <div class="profile-stats">
+            <div class="profile-stat-item">
+                <div class="profile-stat-value">@{{ user.username }}</div>
+                <div class="profile-stat-label">Username</div>
+            </div>
+            <div class="profile-stat-item">
+                <div class="profile-stat-value">
+                    {{ user.created_at.strftime('%Y') if user.created_at else 'N/A' }}
+                </div>
+                <div class="profile-stat-label">Miembro desde</div>
+            </div>
+            <div class="profile-stat-item">
+                <div class="profile-stat-value">
+                    {{ user.last_login.strftime('%d/%m') if user.last_login else 'N/A' }}
+                </div>
+                <div class="profile-stat-label">Último acceso</div>
+            </div>
+            <div class="profile-stat-item">
+                <div class="profile-stat-value">
+                    <i class="fas fa-circle {{ 'text-success' if user.is_active else 'text-danger' }}"></i>
+                </div>
+                <div class="profile-stat-label">
+                    {{ 'Activo' if user.is_active else 'Inactivo' }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PERSONAL INFORMATION -->
+    <!-- ============================================================ -->
+    <div class="settings-section">
+        <h4>
+            <i class="fas fa-id-card"></i>
+            Información Personal
+        </h4>
+
+        <form id="profileForm">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group-custom">
+                        <label>
+                            <i class="fas fa-user"></i>
+                            Nombre Completo
+                        </label>
+                        <input type="text" 
+                               class="form-control form-control-custom" 
+                               id="fullName" 
+                               value="{{ user.full_name or '' }}"
+                               placeholder="Tu nombre completo">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group-custom">
+                        <label>
+                            <i class="fas fa-envelope"></i>
+                            Email
+                        </label>
+                        <input type="email" 
+                               class="form-control form-control-custom" 
+                               id="email" 
+                               value="{{ user.email }}"
+                               placeholder="tu@email.com">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group-custom">
+                        <label>
+                            <i class="fas fa-at"></i>
+                            Username
+                        </label>
+                        <input type="text" 
+                               class="form-control form-control-custom" 
+                               id="username" 
+                               value="{{ user.username }}"
+                               disabled>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            El username no puede ser modificado
+                        </small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group-custom">
+                        <label>
+                            <i class="fas fa-phone"></i>
+                            Teléfono
+                        </label>
+                        <input type="tel" 
+                               class="form-control form-control-custom" 
+                               id="phone" 
+                               value="{{ user.phone or '' }}"
+                               placeholder="+51 999 888 777">
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons-section">
+                <button type="button" class="btn btn-secondary btn-custom" onclick="resetProfileForm()">
+                    <i class="fas fa-undo"></i>
+                    Descartar Cambios
+                </button>
+                <button type="button" class="btn btn-primary btn-custom" onclick="saveProfile()">
+                    <i class="fas fa-save"></i>
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECURITY - CHANGE PASSWORD -->
+    <!-- ============================================================ -->
+    <div class="settings-section">
+        <h4>
+            <i class="fas fa-shield-alt"></i>
+            Seguridad
+        </h4>
+
+        <div class="info-box warning">
+            <i class="fas fa-exclamation-triangle"></i>
+            <div class="info-box-content">
+                <h6>Cambio de Contraseña</h6>
+                <p>Asegúrate de usar una contraseña segura con al menos 6 caracteres, incluyendo mayúsculas, minúsculas y números.</p>
+            </div>
+        </div>
+
+        <form id="passwordForm">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group-custom">
+                        <label>
+                            <i class="fas fa-lock"></i>
+                            Contraseña Actual *
+                        </label>
+                        <div class="position-relative">
+                            <input type="password" 
+                                   class="form-control form-control-custom" 
+                                   id="currentPassword" 
+                                   placeholder="Ingresa tu contraseña actual">
+                            <button type="button" 
+                                    class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2" 
+                                    onclick="togglePasswordVisibility('currentPassword', this)"
+                                    style="background: none; border: none;">
+                                <i class="fas fa-eye text-muted"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group-custom">
+                        <label>
+                            <i class="fas fa-key"></i>
+                            Nueva Contraseña *
+                        </label>
+                        <div class="position-relative">
+                            <input type="password" 
+                                   class="form-control form-control-custom" 
+                                   id="newPassword" 
+                                   placeholder="Mínimo 6 caracteres"
+                                   oninput="checkPasswordStrength()">
+                            <button type="button" 
+                                    class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2" 
+                                    onclick="togglePasswordVisibility('newPassword', this)"
+                                    style="background: none; border: none;">
+                                <i class="fas fa-eye text-muted"></i>
+                            </button>
+                        </div>
+                        <!-- Password Strength Meter -->
+                        <div class="password-strength" id="passwordStrength" style="display: none;">
+                            <div class="password-strength-bar">
+                                <div class="password-strength-fill" id="passwordStrengthFill"></div>
+                            </div>
+                            <div class="password-strength-text" id="passwordStrengthText"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group-custom">
+                        <label>
+                            <i class="fas fa-check-double"></i>
+                            Confirmar Nueva Contraseña *
+                        </label>
+                        <div class="position-relative">
+                            <input type="password" 
+                                   class="form-control form-control-custom" 
+                                   id="confirmPassword" 
+                                   placeholder="Repite la contraseña">
+                            <button type="button" 
+                                    class="btn btn-sm position-absolute end-0 top-50 translate-middle-y me-2" 
+                                    onclick="togglePasswordVisibility('confirmPassword', this)"
+                                    style="background: none; border: none;">
+                                <i class="fas fa-eye text-muted"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons-section">
+                <button type="button" class="btn btn-secondary btn-custom" onclick="resetPasswordForm()">
+                    <i class="fas fa-times"></i>
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-primary btn-custom" onclick="changePassword()">
+                    <i class="fas fa-key"></i>
+                    Cambiar Contraseña
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- PREFERENCES -->
+    <!-- ============================================================ -->
+    <div class="settings-section">
+        <h4>
+            <i class="fas fa-sliders-h"></i>
+            Preferencias
+        </h4>
+
+        <!-- Dark Mode Toggle -->
+        <div class="preference-item">
+            <div class="preference-info">
+                <h6>
+                    <i class="fas fa-moon me-2"></i>
+                    Modo Oscuro
+                </h6>
+                <p>Activa el tema oscuro para reducir la fatiga visual</p>
+            </div>
+            <div class="preference-toggle">
+                <span class="text-muted" id="darkModeStatus">
+                    {{ 'Activado' if user.pref_dark_mode else 'Desactivado' }}
+                </span>
+                <label class="toggle-switch">
+                    <input type="checkbox" 
+                           id="darkModeToggle" 
+                           {{ 'checked' if user.pref_dark_mode else '' }}
+                           onchange="toggleDarkMode()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Email Notifications (Future Feature) -->
+        <div class="preference-item" style="opacity: 0.6;">
+            <div class="preference-info">
+                <h6>
+                    <i class="fas fa-bell me-2"></i>
+                    Notificaciones por Email
+                </h6>
+                <p>Recibe alertas de citas y recordatorios (Próximamente)</p>
+            </div>
+            <div class="preference-toggle">
+                <span class="text-muted">Próximamente</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" disabled>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SESSION INFO -->
+    <!-- ============================================================ -->
+    <div class="settings-section">
+        <h4>
+            <i class="fas fa-clock"></i>
+            Información de Sesión
+        </h4>
+
+        <div class="info-box info">
+            <i class="fas fa-info-circle"></i>
+            <div class="info-box-content">
+                <h6>Última Actividad</h6>
+                <p>
+                    <strong>Último inicio de sesión:</strong> 
+                    {% if user.last_login %}
+                        {{ user.last_login.strftime('%d/%m/%Y %H:%M') }}
+                    {% else %}
+                        No disponible
+                    {% endif %}
+                </p>
+                <p class="mb-0">
+                    <strong>Cuenta creada:</strong> 
+                    {% if user.created_at %}
+                        {{ user.created_at.strftime('%d/%m/%Y') }}
+                    {% else %}
+                        No disponible
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <div class="action-buttons-section">
+            <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger btn-custom">
+                <i class="fas fa-sign-out-alt"></i>
+                Cerrar Sesión
+            </a>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- DANGER ZONE (Solo para usuarios que pueden auto-eliminarse) -->
+    <!-- ============================================================ -->
+    {% if not user.is_super_admin() %}
+    <div class="danger-zone">
+        <h4>
+            <i class="fas fa-exclamation-triangle"></i>
+            Zona Peligrosa
+        </h4>
+        <div class="danger-zone-content">
+            <p class="mb-3">
+                <strong>Estas acciones son irreversibles.</strong> 
+                Solo contacta al administrador si necesitas desactivar o eliminar tu cuenta.
+            </p>
+            <div class="alert alert-warning mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                Para solicitar la desactivación de tu cuenta, contacta a tu administrador {% if user.clinic_id %}de clínica{% endif %}.
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;"></div>
+        <h5>Guardando cambios...</h5>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ============================================================================
+    // ACCOUNT SETTINGS - JAVASCRIPT
+    // ============================================================================
+
+    // ============================================================================
+    // GUARDAR PERFIL
+    // ============================================================================
+    function saveProfile() {
+        const fullName = document.getElementById('fullName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const phone = document.getElementById('phone').value.trim();
+
+        // Validaciones
+        if (!fullName) {
+            showToast('El nombre completo es requerido', 'warning');
+            return;
+        }
+
+        if (!email) {
+            showToast('El email es requerido', 'warning');
+            return;
+        }
+
+        // Validar formato de email
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showToast('El email no es válido', 'warning');
+            return;
+        }
+
+        // Mostrar loading
+        showLoading(true);
+
+        // Enviar petición
+        fetch('/account/update-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: fullName,
+                email: email,
+                phone: phone || null
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'danger');
+            } else {
+                showToast('✅ Perfil actualizado exitosamente', 'success');
+                
+                // Actualizar valores en la página
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            }
+        })
+        .catch(error => {
+            console.error('Error saving profile:', error);
+            showToast('Error al guardar el perfil', 'danger');
+        })
+        .finally(() => {
+            showLoading(false);
+        });
+    }
+
+    function resetProfileForm() {
+        if (confirm('¿Descartar todos los cambios realizados?')) {
+            location.reload();
+        }
+    }
+
+    // ============================================================================
+    // CAMBIAR CONTRASEÑA
+    // ============================================================================
+    function changePassword() {
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        // Validaciones
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            showToast('Completa todos los campos de contraseña', 'warning');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            showToast('La nueva contraseña debe tener al menos 6 caracteres', 'warning');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            showToast('Las contraseñas nuevas no coinciden', 'warning');
+            return;
+        }
+
+        if (currentPassword === newPassword) {
+            showToast('La nueva contraseña debe ser diferente a la actual', 'warning');
+            return;
+        }
+
+        // Mostrar loading
+        showLoading(true);
+
+        // Enviar petición
+        fetch('/account/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                current_password: currentPassword,
+                new_password: newPassword,
+                confirm_password: confirmPassword
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'danger');
+            } else {
+                showToast('✅ Contraseña cambiada exitosamente', 'success');
+                
+                // Limpiar formulario
+                resetPasswordForm();
+            }
+        })
+        .catch(error => {
+            console.error('Error changing password:', error);
+            showToast('Error al cambiar la contraseña', 'danger');
+        })
+        .finally(() => {
+            showLoading(false);
+        });
+    }
+
+    function resetPasswordForm() {
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        
+        // Ocultar medidor de fuerza
+        document.getElementById('passwordStrength').style.display = 'none';
+        
+        // Resetear iconos de visibilidad
+        document.querySelectorAll('#passwordForm .fa-eye-slash').forEach(icon => {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        });
+        
+        document.querySelectorAll('#passwordForm input[type="text"]').forEach(input => {
+            input.type = 'password';
+        });
+    }
+
+    // ============================================================================
+    // PASSWORD STRENGTH METER
+    // ============================================================================
+    function checkPasswordStrength() {
+        const password = document.getElementById('newPassword').value;
+        const strengthContainer = document.getElementById('passwordStrength');
+        const strengthFill = document.getElementById('passwordStrengthFill');
+        const strengthText = document.getElementById('passwordStrengthText');
+
+        if (password.length === 0) {
+            strengthContainer.style.display = 'none';
+            return;
+        }
+
+        strengthContainer.style.display = 'block';
+
+        let strength = 0;
+        let strengthLabel = '';
+        let strengthClass = '';
+
+        // Criterios de fortaleza
+        if (password.length >= 6) strength++;
+        if (password.length >= 10) strength++;
+        if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+        if (/\d/.test(password)) strength++;
+        if (/[^a-zA-Z0-9]/.test(password)) strength++;
+
+        // Determinar nivel
+        if (strength <= 2) {
+            strengthLabel = 'Débil';
+            strengthClass = 'weak';
+        } else if (strength <= 3) {
+            strengthLabel = 'Media';
+            strengthClass = 'medium';
+        } else {
+            strengthLabel = 'Fuerte';
+            strengthClass = 'strong';
+        }
+
+        // Aplicar estilos
+        strengthFill.className = 'password-strength-fill ' + strengthClass;
+        strengthText.className = 'password-strength-text ' + strengthClass;
+        strengthText.textContent = 'Fortaleza: ' + strengthLabel;
+    }
+
+    // ============================================================================
+    // TOGGLE PASSWORD VISIBILITY
+    // ============================================================================
+    function togglePasswordVisibility(inputId, button) {
+        const input = document.getElementById(inputId);
+        const icon = button.querySelector('i');
+
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    // ============================================================================
+    // TOGGLE DARK MODE
+    // ============================================================================
+    function toggleDarkMode() {
+        const toggle = document.getElementById('darkModeToggle');
+        const statusText = document.getElementById('darkModeStatus');
+        const isEnabled = toggle.checked;
+
+        // Actualizar texto
+        statusText.textContent = isEnabled ? 'Activado' : 'Desactivado';
+
+        // Enviar al servidor
+        fetch('/account/toggle-dark-mode', {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showToast(data.error, 'danger');
+                // Revertir toggle
+                toggle.checked = !isEnabled;
+                statusText.textContent = !isEnabled ? 'Activado' : 'Desactivado';
+            } else {
+                // Aplicar cambio inmediatamente
+                const html = document.documentElement;
+                html.setAttribute('data-theme', data.dark_mode ? 'dark' : 'light');
+                
+                showToast(
+                    `Modo ${data.dark_mode ? 'oscuro' : 'claro'} activado`, 
+                    'success'
+                );
+            }
+        })
+        .catch(error => {
+            console.error('Error toggling dark mode:', error);
+            showToast('Error al cambiar el tema', 'danger');
+            
+            // Revertir toggle
+            toggle.checked = !isEnabled;
+            statusText.textContent = !isEnabled ? 'Activado' : 'Desactivado';
+        });
+    }
+
+    // ============================================================================
+    // LOADING OVERLAY
+    // ============================================================================
+    function showLoading(show) {
+        const overlay = document.getElementById('loadingOverlay');
+        if (show) {
+            overlay.classList.add('active');
+        } else {
+            overlay.classList.remove('active');
+        }
+    }
+
+    // ============================================================================
+    // TOAST NOTIFICATIONS
+    // ============================================================================
+    function showToast(message, type = 'info') {
+        const toastContainer = document.createElement('div');
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            animation: slideInRight 0.3s ease-out;
+            max-width: 400px;
+        `;
+        
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'danger' ? 'alert-danger' : 
+                          type === 'warning' ? 'alert-warning' : 'alert-info';
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 
+                     type === 'danger' ? 'fa-exclamation-circle' : 
+                     type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+        
+        toastContainer.innerHTML = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="fas ${icon} me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(toastContainer);
+        
+        const duration = message.length > 100 ? 6000 : 4000;
+        
+        setTimeout(() => {
+            toastContainer.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => toastContainer.remove(), 300);
+        }, duration);
+    }
+
+    // ============================================================================
+    // KEYBOARD SHORTCUTS
+    // ============================================================================
+    document.addEventListener('keydown', function(e) {
+        // Ctrl/Cmd + S para guardar perfil
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            
+            // Verificar si estamos en el formulario de perfil o contraseña
+            const activeElement = document.activeElement;
+            
+            if (activeElement.closest('#profileForm')) {
+                saveProfile();
+            } else if (activeElement.closest('#passwordForm')) {
+                changePassword();
+            }
+        }
+        
+        // Escape para resetear formularios
+        if (e.key === 'Escape') {
+            const activeElement = document.activeElement;
+            
+            if (activeElement.closest('#passwordForm')) {
+                resetPasswordForm();
+            }
+        }
+    });
+
+    // ============================================================================
+    // VALIDACIÓN EN TIEMPO REAL
+    // ============================================================================
+    document.getElementById('email')?.addEventListener('blur', function() {
+        const email = this.value.trim();
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        
+        if (email && !emailRegex.test(email)) {
+            this.classList.add('is-invalid');
+            
+            // Agregar mensaje de error si no existe
+            if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'invalid-feedback';
+                errorMsg.textContent = 'Email inválido';
+                this.parentNode.appendChild(errorMsg);
+            }
+        } else {
+            this.classList.remove('is-invalid');
+            
+            // Eliminar mensaje de error
+            const errorMsg = this.nextElementSibling;
+            if (errorMsg && errorMsg.classList.contains('invalid-feedback')) {
+                errorMsg.remove();
+            }
+        }
+    });
+
+    document.getElementById('phone')?.addEventListener('blur', function() {
+        const phone = this.value.trim();
+        
+        if (phone && phone.length < 7) {
+            this.classList.add('is-invalid');
+            
+            if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'invalid-feedback';
+                errorMsg.textContent = 'Teléfono inválido';
+                this.parentNode.appendChild(errorMsg);
+            }
+        } else {
+            this.classList.remove('is-invalid');
+            
+            const errorMsg = this.nextElementSibling;
+            if (errorMsg && errorMsg.classList.contains('invalid-feedback')) {
+                errorMsg.remove();
+            }
+        }
+    });
+
+    // Validación de coincidencia de contraseñas en tiempo real
+    document.getElementById('confirmPassword')?.addEventListener('input', function() {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = this.value;
+        
+        if (confirmPassword.length > 0) {
+            if (newPassword !== confirmPassword) {
+                this.classList.add('is-invalid');
+                
+                if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'invalid-feedback';
+                    errorMsg.textContent = 'Las contraseñas no coinciden';
+                    this.parentNode.appendChild(errorMsg);
+                }
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+                
+                const errorMsg = this.nextElementSibling;
+                if (errorMsg && errorMsg.classList.contains('invalid-feedback')) {
+                    errorMsg.remove();
+                }
+            }
+        }
+    });
+
+    // ============================================================================
+    // CONFIRMACIÓN ANTES DE SALIR (si hay cambios sin guardar)
+    // ============================================================================
+    let hasUnsavedChanges = false;
+
+    // Detectar cambios en formulario de perfil
+    document.querySelectorAll('#profileForm input').forEach(input => {
+        input.addEventListener('input', () => {
+            hasUnsavedChanges = true;
+        });
+    });
+
+    // Detectar cambios en formulario de contraseña
+    document.querySelectorAll('#passwordForm input').forEach(input => {
+        input.addEventListener('input', () => {
+            hasUnsavedChanges = true;
+        });
+    });
+
+    // Advertir antes de salir
+    window.addEventListener('beforeunload', (e) => {
+        if (hasUnsavedChanges) {
+            e.preventDefault();
+            e.returnValue = 'Tienes cambios sin guardar. ¿Estás seguro de salir?';
+            return e.returnValue;
+        }
+    });
+
+    // Resetear flag al guardar
+    const originalSaveProfile = saveProfile;
+    saveProfile = function() {
+        hasUnsavedChanges = false;
+        originalSaveProfile();
+    };
+
+    const originalChangePassword = changePassword;
+    changePassword = function() {
+        hasUnsavedChanges = false;
+        originalChangePassword();
+    };
+
+    // ============================================================================
+    // AUTO-GUARDAR DRAFT (localStorage backup)
+    // ============================================================================
+    function saveDraft() {
+        const draft = {
+            fullName: document.getElementById('fullName').value,
+            email: document.getElementById('email').value,
+            phone: document.getElementById('phone').value,
+            timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem('accountSettingsDraft', JSON.stringify(draft));
+    }
+
+    function loadDraft() {
+        const draftStr = localStorage.getItem('accountSettingsDraft');
+        
+        if (draftStr) {
+            try {
+                const draft = JSON.parse(draftStr);
+                const draftAge = new Date() - new Date(draft.timestamp);
+                
+                // Si el draft tiene menos de 1 hora
+                if (draftAge < 3600000) {
+                    if (confirm('Se encontró un borrador guardado. ¿Deseas restaurarlo?')) {
+                        document.getElementById('fullName').value = draft.fullName || '';
+                        document.getElementById('email').value = draft.email || '';
+                        document.getElementById('phone').value = draft.phone || '';
+                        
+                        showToast('Borrador restaurado', 'info');
+                    }
+                }
+                
+                // Limpiar draft antiguo
+                localStorage.removeItem('accountSettingsDraft');
+            } catch (e) {
+                console.error('Error loading draft:', e);
+            }
+        }
+    }
+
+    // Auto-guardar cada 30 segundos
+    setInterval(() => {
+        if (hasUnsavedChanges) {
+            saveDraft();
+        }
+    }, 30000);
+
+    // Cargar draft al iniciar
+    document.addEventListener('DOMContentLoaded', loadDraft);
+
+    // ============================================================================
+    // ANIMACIONES CSS
+    // ============================================================================
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+
+        .is-valid {
+            border-color: #10b981 !important;
+        }
+
+        .invalid-feedback {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #dc3545;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // ============================================================================
+    // LOG DE ACTIVIDAD (para debugging)
+    // ============================================================================
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        console.log('%c⚙️ Account Settings Loaded', 'color: #6366F1; font-size: 14px; font-weight: bold;');
+        console.log('User:', '{{ user.username }}');
+        console.log('Role:', '{{ user.role.value }}');
+        console.log('Dark Mode:', '{{ user.pref_dark_mode }}');  // Como string
+    }
+</script>
+{% endblock %}

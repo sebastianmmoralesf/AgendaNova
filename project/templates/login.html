@@ -1,0 +1,611 @@
+{% extends "base.html" %}
+
+{% block title %}Iniciar Sesión - AgendaNova{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Estilos específicos para la página de login */
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .login-container {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem 1rem;
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 20px;
+        padding: 3rem;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        max-width: 450px;
+        width: 100%;
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .login-header .logo {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2.5rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+    }
+
+    .login-header h3 {
+        color: var(--primary);
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .login-header p {
+        color: var(--gray);
+        font-size: 0.95rem;
+    }
+
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+
+    .form-floating > .form-control {
+        border: 2px solid var(--border);
+        border-radius: 12px;
+        padding: 1rem 0.75rem;
+        height: auto;
+        transition: all 0.3s ease;
+    }
+
+    .form-floating > .form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+
+    .form-floating > label {
+        padding: 1rem 0.75rem;
+        color: var(--gray);
+    }
+
+    .form-check {
+        padding-left: 1.75rem;
+    }
+
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-top: 0.125rem;
+        border: 2px solid var(--border);
+        border-radius: 6px;
+    }
+
+    .form-check-input:checked {
+        background-color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .form-check-label {
+        color: var(--dark);
+        font-weight: 500;
+        margin-left: 0.5rem;
+    }
+
+    .btn-login {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 0.875rem 1.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        margin-top: 1rem;
+    }
+
+    .btn-login:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+    }
+
+    .btn-login:active {
+        transform: translateY(0);
+    }
+
+    .btn-login:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .login-divider {
+        text-align: center;
+        margin: 1.5rem 0;
+        position: relative;
+    }
+
+    .login-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--border);
+    }
+
+    .login-divider span {
+        background: white;
+        padding: 0 1rem;
+        position: relative;
+        color: var(--gray);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .demo-credentials {
+        background: var(--light);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        border-left: 4px solid var(--primary);
+    }
+
+    .demo-credentials h6 {
+        color: var(--primary);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .demo-credentials .credential-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border);
+    }
+
+    .demo-credentials .credential-item:hover {
+        border-color: var(--primary);
+        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.1);
+    }
+
+    .demo-credentials .credential-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .credential-info {
+        flex: 1;
+    }
+
+    .credential-info .role-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 0.25rem;
+    }
+
+    .credential-info .role-badge.super-admin {
+        background: rgba(239, 68, 68, 0.1);
+        color: #dc3545;
+    }
+
+    .credential-info .role-badge.clinic-admin {
+        background: rgba(79, 70, 229, 0.1);
+        color: #4F46E5;
+    }
+
+    .credential-info .role-badge.professional {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10B981;
+    }
+
+    .credential-info small {
+        display: block;
+        color: var(--gray);
+        font-size: 0.75rem;
+    }
+
+    .btn-copy {
+        background: none;
+        border: none;
+        color: var(--primary);
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-copy:hover {
+        background: rgba(79, 70, 229, 0.1);
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        color: var(--gray);
+        cursor: pointer;
+        padding: 0.5rem;
+        z-index: 10;
+    }
+
+    .password-toggle:hover {
+        color: var(--primary);
+    }
+
+    .footer {
+        background: transparent;
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: 2rem;
+    }
+
+    .footer a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+
+    .footer a:hover {
+        color: white;
+    }
+
+    /* Animaciones */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Spinner de carga */
+    .spinner-border-sm {
+        width: 1rem;
+        height: 1rem;
+        border-width: 0.15em;
+    }
+
+    /* Responsive */
+    @media (max-width: 576px) {
+        .login-card {
+            padding: 2rem 1.5rem;
+        }
+
+        .login-header .logo {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+        }
+
+        .demo-credentials {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-container">
+    <div class="login-card">
+        <!-- Header -->
+        <div class="login-header">
+            <div class="logo">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <h3>Bienvenido a AgendaNova</h3>
+            <p>Gestiona tus citas de forma profesional</p>
+        </div>
+
+        <!-- Formulario de Login -->
+        <form method="POST" action="{{ url_for('auth.login') }}" id="loginForm">
+            <!-- Usuario o Email -->
+            <div class="form-floating">
+                <input type="text" 
+                       class="form-control" 
+                       id="username" 
+                       name="username" 
+                       placeholder="Usuario o Email" 
+                       required 
+                       autofocus
+                       autocomplete="username">
+                <label for="username">
+                    <i class="fas fa-user me-2"></i>Usuario o Email
+                </label>
+            </div>
+
+            <!-- Contraseña -->
+            <div class="form-floating position-relative">
+                <input type="password" 
+                       class="form-control" 
+                       id="password" 
+                       name="password" 
+                       placeholder="Contraseña" 
+                       required
+                       autocomplete="current-password">
+                <label for="password">
+                    <i class="fas fa-lock me-2"></i>Contraseña
+                </label>
+                <button type="button" 
+                        class="password-toggle" 
+                        id="togglePassword"
+                        title="Mostrar/Ocultar contraseña">
+                    <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                </button>
+            </div>
+
+            <!-- Recordarme -->
+            <div class="form-check mb-3">
+                <input class="form-check-input" 
+                       type="checkbox" 
+                       id="remember" 
+                       name="remember" 
+                       value="true">
+                <label class="form-check-label" for="remember">
+                    Recordarme en este dispositivo
+                </label>
+            </div>
+
+            <!-- Botón de Login -->
+            <button type="submit" class="btn btn-login" id="loginBtn">
+                <i class="fas fa-sign-in-alt me-2"></i>Iniciar Sesión
+            </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="login-divider">
+            <span>o</span>
+        </div>
+
+        <!-- Credenciales de Prueba -->
+        <div class="demo-credentials">
+            <h6>
+                <i class="fas fa-key me-2"></i>Credenciales de Prueba
+            </h6>
+            
+            <!-- Super Admin -->
+            <div class="credential-item" onclick="fillCredentials('superadmin', 'Super@2025!')">
+                <div class="credential-info">
+                    <span class="role-badge super-admin">Super Admin</span>
+                    <small>superadmin / Super@2025!</small>
+                </div>
+                <button type="button" class="btn-copy" title="Copiar credenciales">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+
+            <!-- Clinic Admin -->
+            <div class="credential-item" onclick="fillCredentials('admin_clinica_demo', 'Admin@2025!')">
+                <div class="credential-info">
+                    <span class="role-badge clinic-admin">Clinic Admin</span>
+                    <small>admin_clinica_demo / Admin@2025!</small>
+                </div>
+                <button type="button" class="btn-copy" title="Copiar credenciales">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+
+            <!-- Professional -->
+            <div class="credential-item" onclick="fillCredentials('dr_lopez', 'Doctor@2025!')">
+                <div class="credential-info">
+                    <span class="role-badge professional">Profesional</span>
+                    <small>dr_lopez / Doctor@2025!</small>
+                </div>
+                <button type="button" class="btn-copy" title="Copiar credenciales">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // ================================================================
+    // TOGGLE PASSWORD VISIBILITY
+    // ================================================================
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const togglePasswordIcon = document.getElementById('togglePasswordIcon');
+
+    togglePassword.addEventListener('click', function() {
+        // Toggle tipo de input
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        // Toggle icono
+        if (type === 'password') {
+            togglePasswordIcon.classList.remove('fa-eye-slash');
+            togglePasswordIcon.classList.add('fa-eye');
+            togglePassword.setAttribute('title', 'Mostrar contraseña');
+        } else {
+            togglePasswordIcon.classList.remove('fa-eye');
+            togglePasswordIcon.classList.add('fa-eye-slash');
+            togglePassword.setAttribute('title', 'Ocultar contraseña');
+        }
+    });
+
+    // ================================================================
+    // FILL DEMO CREDENTIALS
+    // ================================================================
+    function fillCredentials(username, password) {
+        document.getElementById('username').value = username;
+        document.getElementById('password').value = password;
+        
+        // Agregar efecto visual
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        
+        usernameInput.classList.add('border-success');
+        passwordInput.classList.add('border-success');
+        
+        setTimeout(() => {
+            usernameInput.classList.remove('border-success');
+            passwordInput.classList.remove('border-success');
+        }, 1000);
+        
+        // Mostrar toast
+        showToastLogin('Credenciales cargadas. Haz clic en "Iniciar Sesión"', 'success');
+    }
+
+    // ================================================================
+    // FORM SUBMISSION CON VALIDACIÓN
+    // ================================================================
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+
+    loginForm.addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+
+        // Validación básica
+        if (!username || !password) {
+            e.preventDefault();
+            showToastLogin('Por favor completa todos los campos', 'warning');
+            return;
+        }
+
+        // Deshabilitar botón y mostrar spinner
+        loginBtn.disabled = true;
+        loginBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Iniciando sesión...';
+    });
+
+    // ================================================================
+    // TOAST PARA LOGIN (sin header navbar)
+    // ================================================================
+    function showToastLogin(message, type = 'info') {
+        const toastContainer = document.createElement('div');
+        toastContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            animation: slideInRight 0.3s ease-out;
+            max-width: 400px;
+        `;
+        
+        const alertClass = type === 'success' ? 'alert-success' : 
+                          type === 'danger' ? 'alert-danger' : 
+                          type === 'warning' ? 'alert-warning' : 'alert-info';
+        
+        const icon = type === 'success' ? 'fa-check-circle' : 
+                     type === 'danger' ? 'fa-exclamation-circle' : 
+                     type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+        
+        toastContainer.innerHTML = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                <i class="fas ${icon} me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(toastContainer);
+        
+        setTimeout(() => {
+            toastContainer.style.animation = 'fadeOut 0.3s ease-out';
+            setTimeout(() => toastContainer.remove(), 300);
+        }, 4000);
+    }
+
+    // ================================================================
+    // ANIMACIÓN DE ENTRADA
+    // ================================================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // Focus en el primer campo
+        document.getElementById('username').focus();
+
+        // Detectar Enter en cualquier campo
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    loginForm.submit();
+                }
+            });
+        });
+    });
+
+    // ================================================================
+    // DETECCIÓN DE CAPS LOCK
+    // ================================================================
+    passwordInput.addEventListener('keyup', function(e) {
+        if (e.getModifierState && e.getModifierState('CapsLock')) {
+            if (!document.getElementById('capsLockWarning')) {
+                const warning = document.createElement('small');
+                warning.id = 'capsLockWarning';
+                warning.className = 'text-warning d-block mt-1';
+                warning.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Bloq Mayús está activado';
+                passwordInput.parentElement.appendChild(warning);
+            }
+        } else {
+            const warning = document.getElementById('capsLockWarning');
+            if (warning) {
+                warning.remove();
+            }
+        }
+    });
+
+    // ================================================================
+    // COPIAR CREDENCIALES AL PORTAPAPELES
+    // ================================================================
+    document.querySelectorAll('.btn-copy').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevenir que se ejecute fillCredentials
+            
+            const credentialItem = this.closest('.credential-item');
+            const credentialText = credentialItem.querySelector('small').textContent;
+            
+            // Copiar al portapapeles
+            navigator.clipboard.writeText(credentialText).then(() => {
+                // Cambiar icono temporalmente
+                const icon = this.querySelector('i');
+                icon.classList.remove('fa-copy');
+                icon.classList.add('fa-check');
+                
+                showToastLogin('Credenciales copiadas al portapapeles', 'success');
+                
+                setTimeout(() => {
+                    icon.classList.remove('fa-check');
+                    icon.classList.add('fa-copy');
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar:', err);
+                showToastLogin('Error al copiar las credenciales', 'danger');
+            });
+        });
+    });
+</script>
+{% endblock %}

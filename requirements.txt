@@ -1,0 +1,23 @@
+# Core Flask
+Flask==3.0.0
+Werkzeug==3.0.1
+
+# Database (VERSIÓN ACTUALIZADA)
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.35
+
+# Authentication
+Flask-Login==0.6.3
+Flask-Bcrypt==1.0.1
+
+# CORS
+Flask-CORS==4.0.0
+
+# Environment Variables
+python-dotenv==1.0.0
+
+# Production Server
+gunicorn==21.2.0
+
+# Utilities
+pytz==2024.1

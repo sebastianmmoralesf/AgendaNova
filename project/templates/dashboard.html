@@ -1,0 +1,877 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AgendaNova{% endblock %}
+
+{% block extra_css %}
+<!-- FullCalendar CSS -->
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' rel='stylesheet' />
+
+<style>
+    /* Estilos específicos del dashboard */
+    .dashboard-container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    /* ============================================================ */
+    /* DASHBOARD HEADER */
+    /* ============================================================ */
+    .dashboard-header {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    .dashboard-header h2 {
+        color: var(--primary);
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .dashboard-header p {
+        color: var(--gray);
+        margin: 0.5rem 0 0 0;
+    }
+
+    /* ============================================================ */
+    /* STATS CARDS */
+    /* ============================================================ */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        animation: fadeIn 0.8s ease-out;
+        border-left: 4px solid var(--primary);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card:nth-child(2) {
+        border-left-color: var(--success);
+    }
+
+    .stat-card:nth-child(3) {
+        border-left-color: var(--warning);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .stat-icon.primary {
+        background: rgba(79, 70, 229, 0.1);
+        color: var(--primary);
+    }
+
+    .stat-icon.success {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+    }
+
+    .stat-icon.warning {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--dark);
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: var(--gray);
+        font-size: 0.9rem;
+        font-weight: 500;
+        margin-top: 0.5rem;
+    }
+
+    /* ============================================================ */
+    /* CALENDAR WRAPPER */
+    /* ============================================================ */
+    .calendar-wrapper {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        animation: fadeIn 1s ease-out;
+    }
+
+    .calendar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .calendar-header h4 {
+        margin: 0;
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    .calendar-actions {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+    }
+
+    /* ============================================================ */
+    /* TABS */
+    /* ============================================================ */
+    .nav-tabs {
+        border-bottom: 2px solid var(--border);
+        margin-bottom: 1.5rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+        border-radius: 8px 8px 0 0;
+        position: relative;
+    }
+
+    .nav-tabs .nav-link:hover {
+        color: var(--primary);
+        background: rgba(79, 70, 229, 0.05);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary);
+        background: none;
+    }
+
+    .nav-tabs .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: var(--primary);
+        border-radius: 3px 3px 0 0;
+    }
+
+    .tab-content {
+        padding-top: 1.5rem;
+    }
+
+    /* ============================================================ */
+    /* FULLCALENDAR CUSTOMIZATION */
+    /* ============================================================ */
+    .fc {
+        border: none;
+    }
+
+    .fc-header-toolbar {
+        padding: 1rem;
+        margin-bottom: 1rem !important;
+        background: var(--light);
+        border-radius: 12px;
+    }
+
+    .fc-button {
+        background: var(--primary) !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 0.5rem 1rem !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        text-transform: capitalize !important;
+    }
+
+    .fc-button:hover {
+        background: var(--primary-dark) !important;
+        transform: translateY(-2px);
+    }
+
+    .fc-button-active {
+        background: var(--primary-dark) !important;
+    }
+
+    .fc-button:disabled {
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }
+
+    .fc-daygrid-day-number {
+        padding: 8px;
+        font-weight: 600;
+        color: var(--dark);
+    }
+
+    .fc-day-today {
+        background: rgba(79, 70, 229, 0.05) !important;
+    }
+
+    .fc-event {
+        border-radius: 6px;
+        padding: 4px 8px;
+        border: none !important;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .fc-event:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .fc-event-title {
+        font-weight: 600;
+    }
+
+    .fc-daygrid-event-dot {
+        display: none;
+    }
+
+    /* ============================================================ */
+    /* APPOINTMENTS LIST */
+    /* ============================================================ */
+    .appointments-list {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .appointment-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--primary);
+        animation: slideInCard 0.3s ease-out;
+    }
+
+    .appointment-card:hover {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .appointment-card.completada {
+        border-left-color: var(--success);
+        opacity: 0.9;
+    }
+
+    .appointment-card.cancelada {
+        border-left-color: var(--danger);
+        opacity: 0.7;
+    }
+
+    .appointment-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 0.75rem;
+    }
+
+    .appointment-card-header h6 {
+        color: var(--dark);
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .appointment-card-body {
+        color: var(--gray);
+        font-size: 0.9rem;
+    }
+
+    .appointment-card-body i {
+        width: 20px;
+        text-align: center;
+    }
+
+    .appointment-card-actions {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border);
+    }
+
+    /* ============================================================ */
+    /* CANCELLED APPOINTMENTS */
+    /* ============================================================ */
+    .cancelled-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.25rem;
+        border-left: 4px solid #dc3545;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        opacity: 0.85;
+        margin-bottom: 1rem;
+        animation: slideInCard 0.3s ease-out;
+    }
+
+    .cancelled-card h6 {
+        color: #6c757d;
+        font-weight: 600;
+        text-decoration: line-through;
+    }
+
+    /* ============================================================ */
+    /* MODAL */
+    /* ============================================================ */
+    .modal-content {
+        border-radius: 20px;
+        border: none;
+        overflow: hidden;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        color: white;
+        padding: 1.5rem;
+        border: none;
+    }
+
+    .modal-header .btn-close {
+        filter: brightness(0) invert(1);
+    }
+
+    .modal-body {
+        padding: 2rem;
+    }
+
+    .modal-footer {
+        border: none;
+        padding: 1.5rem;
+        background: var(--light);
+    }
+
+    /* ============================================================ */
+    /* BUTTONS */
+    /* ============================================================ */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ============================================================ */
+    /* EMPTY STATE */
+    /* ============================================================ */
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: var(--gray);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.3;
+    }
+
+    .empty-state h5 {
+        color: var(--dark);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    /* ============================================================ */
+    /* ANIMATIONS */
+    /* ============================================================ */
+    @keyframes slideInCard {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* ============================================================ */
+    /* RESPONSIVE */
+    /* ============================================================ */
+    @media (max-width: 768px) {
+        .dashboard-header {
+            padding: 1.5rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .calendar-wrapper {
+            padding: 1rem;
+        }
+
+        .calendar-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .calendar-actions {
+            width: 100%;
+        }
+
+        .calendar-actions .btn {
+            flex: 1;
+        }
+
+        .nav-tabs .nav-link {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .appointment-card {
+            padding: 1rem;
+        }
+
+        .appointment-card-actions {
+            flex-direction: column;
+        }
+
+        .appointment-card-actions .btn {
+            width: 100%;
+        }
+    }
+
+    /* ============================================================ */
+    /* DARK MODE SUPPORT */
+    /* ============================================================ */
+    [data-theme="dark"] .dashboard-header,
+    [data-theme="dark"] .stat-card,
+    [data-theme="dark"] .calendar-wrapper,
+    [data-theme="dark"] .appointment-card {
+        background: #1e293b;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    [data-theme="dark"] .fc-header-toolbar {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .fc-day-today {
+        background: rgba(79, 70, 229, 0.2) !important;
+    }
+
+    [data-theme="dark"] .cancelled-card {
+        background: #1e293b;
+    }
+
+    [data-theme="dark"] .modal-content {
+        background: #1e293b;
+    }
+
+    [data-theme="dark"] .modal-body,
+    [data-theme="dark"] .modal-footer {
+        background: #1e293b;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- ============================================================ -->
+    <!-- DASHBOARD HEADER -->
+    <!-- ============================================================ -->
+    <div class="dashboard-header">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h2>
+                    <i class="fas fa-calendar-alt me-2"></i>Dashboard
+                </h2>
+                <p class="mb-0">
+                    Bienvenido, <strong>{{ user.full_name or user.username }}</strong>
+                    {% if user.clinic %}
+                        - {{ user.clinic.name }}
+                    {% endif %}
+                </p>
+            </div>
+            <div>
+                <span class="role-badge role-{{ user.role.value.lower().replace('_', '-') }}">
+                    {% if user.is_professional() %}
+                        Profesional
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- STATISTICS CARDS -->
+    <!-- ============================================================ -->
+    <div class="stats-grid" id="statsContainer">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-value" id="stat1">0</div>
+            <div class="stat-label" id="label1">Cargando...</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-value" id="stat2">0</div>
+            <div class="stat-label" id="label2">Cargando...</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-value" id="stat3">0</div>
+            <div class="stat-label" id="label3">Cargando...</div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CALENDAR AND LISTS (TABS) -->
+    <!-- ============================================================ -->
+    <div class="calendar-wrapper">
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="calendar-tab" data-bs-toggle="tab" 
+                        data-bs-target="#calendar-pane" type="button" role="tab">
+                    <i class="fas fa-calendar me-2"></i>Calendario
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="list-tab" data-bs-toggle="tab" 
+                        data-bs-target="#list-pane" type="button" role="tab">
+                    <i class="fas fa-list me-2"></i>Lista de Citas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="cancelled-tab" data-bs-toggle="tab" 
+                        data-bs-target="#cancelled-pane" type="button" role="tab">
+                    <i class="fas fa-ban me-2"></i>Historial Canceladas
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tabs Content -->
+        <div class="tab-content" id="dashboardTabContent">
+            
+            <!-- ======================================================== -->
+            <!-- TAB 1: CALENDAR VIEW -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade show active" id="calendar-pane" role="tabpanel">
+                <div class="calendar-header">
+                    <h4>
+                        <i class="fas fa-calendar me-2"></i>Calendario de Citas
+                    </h4>
+                    <div class="calendar-actions">
+                        <button class="btn btn-success btn-action" onclick="openNewAppointmentModal()">
+                            <i class="fas fa-plus"></i>Nueva Cita
+                        </button>
+                    </div>
+                </div>
+                <div id="calendar-container"></div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- TAB 2: APPOINTMENTS LIST -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="list-pane" role="tabpanel">
+                <div class="calendar-header">
+                    <h4>
+                        <i class="fas fa-list me-2"></i>Gestión de Citas
+                    </h4>
+                    <div class="calendar-actions">
+                        <button class="btn btn-success btn-action" onclick="openNewAppointmentModal()">
+                            <i class="fas fa-plus"></i>Nueva Cita
+                        </button>
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Acciones disponibles:</strong>
+                    <ul class="mb-0 mt-2">
+                        <li><i class="fas fa-check text-success"></i> Completar citas que ya pasaron</li>
+                        <li><i class="fas fa-times text-danger"></i> Cancelar citas programadas</li>
+                        <li><i class="fas fa-whatsapp text-success"></i> Enviar recordatorio por WhatsApp</li>
+                    </ul>
+                </div>
+
+                <div class="appointments-list" id="appointments-list">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- TAB 3: CANCELLED APPOINTMENTS -->
+            <!-- ======================================================== -->
+            <div class="tab-pane fade" id="cancelled-pane" role="tabpanel">
+                <h4 class="mb-3">
+                    <i class="fas fa-history me-2"></i>Historial de Citas Canceladas
+                </h4>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Este es un registro histórico de citas canceladas. Solo lectura.
+                </div>
+                <div id="cancelled-list">
+                    <div class="text-center py-3">
+                        <div class="spinner-border text-warning" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: APPOINTMENT FORM -->
+<!-- ============================================================ -->
+<div class="modal fade" id="appointmentModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">
+                    <i class="fas fa-calendar-plus me-2"></i>Añadir Cita
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="appointmentForm">
+                    <div class="row">
+                        <!-- Patient Selection -->
+                        <div class="col-md-6 mb-3">
+                            <label for="patient_id" class="form-label">
+                                <i class="fas fa-user-injured me-1"></i>Paciente
+                            </label>
+                            <select class="form-select" id="patient_id" required>
+                                <option value="">-- Seleccionar paciente --</option>
+                            </select>
+                            <small class="text-muted">
+                                <a href="#" onclick="openNewPatientModal(); return false;">
+                                    <i class="fas fa-plus-circle"></i> Crear nuevo paciente
+                                </a>
+                            </small>
+                        </div>
+
+                        <!-- Service Selection -->
+                        <div class="col-md-6 mb-3">
+                            <label for="service_id" class="form-label">
+                                <i class="fas fa-stethoscope me-1"></i>Servicio
+                            </label>
+                            <select class="form-select" id="service_id" required>
+                                <option value="">-- Seleccionar servicio --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Start DateTime -->
+                        <div class="col-md-6 mb-3">
+                            <label for="start_datetime" class="form-label">
+                                <i class="fas fa-clock me-1"></i>Fecha y Hora de Inicio
+                            </label>
+                            <input type="datetime-local" class="form-control" id="start_datetime" required>
+                        </div>
+
+                        <!-- End DateTime -->
+                        <div class="col-md-6 mb-3">
+                            <label for="end_datetime" class="form-label">
+                                <i class="fas fa-clock me-1"></i>Fecha y Hora de Fin
+                            </label>
+                            <input type="datetime-local" class="form-control" id="end_datetime" required>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>Notas
+                        </label>
+                        <textarea class="form-control" id="notes" rows="3" 
+                                  placeholder="Información adicional sobre la cita..."></textarea>
+                    </div>
+
+                    <!-- Info Alert -->
+                    <div class="alert alert-info small mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        La cita se creará como <strong>"Programada"</strong>. 
+                        Podrás completarla o cancelarla desde la pestaña "Lista de Citas".
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveAppointment()">
+                    <i class="fas fa-save me-1"></i>Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- MODAL: NEW PATIENT (Quick Add) -->
+<!-- ============================================================ -->
+<div class="modal fade" id="newPatientModal" tabindex="-1" aria-labelledby="newPatientModalTitle" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="newPatientModalTitle">
+                    <i class="fas fa-user-plus me-2"></i>Nuevo Paciente
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newPatientForm">
+                    <div class="mb-3">
+                        <label for="patient_name" class="form-label">
+                            <i class="fas fa-user me-1"></i>Nombre Completo *
+                        </label>
+                        <input type="text" class="form-control" id="patient_name" 
+                               placeholder="Ej: Juan Pérez García" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="patient_phone" class="form-label">
+                            <i class="fas fa-phone me-1"></i>Teléfono *
+                        </label>
+                        <input type="tel" class="form-control" id="patient_phone" 
+                               placeholder="Ej: +51 987 654 321" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="patient_email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i>Email (opcional)
+                        </label>
+                        <input type="email" class="form-control" id="patient_email" 
+                               placeholder="Ej: juan@email.com">
+                    </div>
+                    <div class="mb-3">
+                        <label for="patient_notes" class="form-label">
+                            <i class="fas fa-sticky-note me-1"></i>Notas
+                        </label>
+                        <textarea class="form-control" id="patient_notes" rows="2" 
+                                  placeholder="Información adicional del paciente..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-primary" onclick="saveNewPatient()">
+                    <i class="fas fa-save me-1"></i>Guardar Paciente
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- FullCalendar JS -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'></script>
+
+<!-- Dashboard Logic -->
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+<!-- Tab event handlers -->
+<script>
+    // Cargar lista al cambiar de tab
+    document.getElementById('list-tab')?.addEventListener('shown.bs.tab', function() {
+        loadAppointmentsList();
+    });
+
+    document.getElementById('cancelled-tab')?.addEventListener('shown.bs.tab', function() {
+        loadCancelledAppointments();
+    });
+
+    // Auto-calcular end_datetime cuando cambia service
+    document.getElementById('service_id')?.addEventListener('change', function() {
+        const serviceId = this.value;
+        if (!serviceId) return;
+        
+        // Buscar el servicio seleccionado para obtener duration
+        fetch(`/api/services`)
+            .then(res => res.json())
+            .then(services => {
+                const service = services.find(s => s.id == serviceId);
+                if (service && service.duration_minutes) {
+                    const startInput = document.getElementById('start_datetime');
+                    if (startInput.value) {
+                        const start = new Date(startInput.value);
+                        const end = new Date(start.getTime() + service.duration_minutes * 60000);
+                        document.getElementById('end_datetime').value = formatDateTimeLocal(end);
+                    }
+                }
+            });
+    });
+
+    // Auto-calcular end_datetime cuando cambia start_datetime
+    document.getElementById('start_datetime')?.addEventListener('change', function() {
+        const serviceId = document.getElementById('service_id').value;
+        if (!serviceId) return;
+        
+        fetch(`/api/services`)
+            .then(res => res.json())
+            .then(services => {
+                const service = services.find(s => s.id == serviceId);
+                if (service && service.duration_minutes) {
+                    const start = new Date(this.value);
+                    const end = new Date(start.getTime() + service.duration_minutes * 60000);
+                    document.getElementById('end_datetime').value = formatDateTimeLocal(end);
+                }
+            });
+    });
+
+    function formatDateTimeLocal(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+</script>
+{% endblock %}

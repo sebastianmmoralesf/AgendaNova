@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: agendanova
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn run:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: CREATE_DEMO_DATA
+        value: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agendanova-db
+          property: connectionString
+
+databases:
+  - name: agendanova-db
+    plan: free
+    databaseName: agendanova
+    user: agendanova
