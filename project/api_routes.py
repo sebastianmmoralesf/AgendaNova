@@ -131,7 +131,11 @@ def get_patient(id):
 @api_bp.route('/patients', methods=['POST'])
 @login_required
 def create_patient():
-    """POST: Crea un nuevo paciente"""
+    """
+    POST: Crea un nuevo paciente
+    
+    TAREA 1 FIX: Validación de campos opcionales antes de .strip()
+    """
     # Solo PROFESSIONAL o superior puede crear pacientes
     if not current_user.can_manage_appointments():
         return jsonify({'error': 'No autorizado para crear pacientes'}), 403
@@ -160,14 +164,19 @@ def create_patient():
     
     # Crear paciente
     try:
+        # ✅ TAREA 1 FIX: Validar antes de .strip()
+        email_value = data.get('email')
+        address_value = data.get('address')
+        notes_value = data.get('notes')
+        
         patient = Patient(
             clinic_id=clinic_id,
             name=data['name'].strip(),
             phone=data['phone'].strip(),
-            email=data.get('email', '').strip() or None,
+            email=email_value.strip() if email_value else None,  # ✅ FIX
             date_of_birth=datetime.fromisoformat(data['date_of_birth']).date() if data.get('date_of_birth') else None,
-            address=data.get('address', '').strip() or None,
-            notes=data.get('notes', '').strip() or None
+            address=address_value.strip() if address_value else None,  # ✅ FIX
+            notes=notes_value.strip() if notes_value else None  # ✅ FIX
         )
         
         db.session.add(patient)
@@ -199,19 +208,22 @@ def update_patient(id):
     data = request.get_json()
     
     try:
-        # Actualizar campos
+        # Actualizar campos con validación similar
         if 'name' in data:
             patient.name = data['name'].strip()
         if 'phone' in data:
             patient.phone = data['phone'].strip()
         if 'email' in data:
-            patient.email = data['email'].strip() or None
+            email_value = data['email']
+            patient.email = email_value.strip() if email_value else None
         if 'date_of_birth' in data:
             patient.date_of_birth = datetime.fromisoformat(data['date_of_birth']).date() if data['date_of_birth'] else None
         if 'address' in data:
-            patient.address = data['address'].strip() or None
+            address_value = data['address']
+            patient.address = address_value.strip() if address_value else None
         if 'notes' in data:
-            patient.notes = data['notes'].strip() or None
+            notes_value = data['notes']
+            patient.notes = notes_value.strip() if notes_value else None
         
         db.session.commit()
         
@@ -287,6 +299,69 @@ def get_professionals():
             'phone': prof.phone
         }
         for prof in professionals
+    ])
+
+
+# ============================================================================
+# TAREA 2: NUEVO ENDPOINT - BÚSQUEDA AUTOCOMPLETE DE PACIENTES
+# ============================================================================
+@api_bp.route('/search/patients', methods=['GET'])
+@login_required
+def search_patients():
+    """
+    GET: Búsqueda autocomplete de pacientes por nombre o teléfono.
+    
+    Query params:
+        - q (str): Término de búsqueda (mínimo 1 carácter)
+    
+    Returns:
+        JSON: Lista de hasta 10 pacientes con {id, name, phone}
+    
+    Ejemplo de uso:
+        GET /api/search/patients?q=MAR
+        Response: [
+            {"id": 1, "name": "Maria González", "phone": "+51 999 888 777"},
+            {"id": 5, "name": "Marco Pérez", "phone": "+51 987 654 321"}
+        ]
+    """
+    query_term = request.args.get('q', '').strip()
+    
+    # Validación: al menos 1 carácter
+    if not query_term or len(query_term) < 1:
+        return jsonify([])  # Retornar array vacío si no hay query
+    
+    clinic_id = get_user_clinic_id()
+    
+    # Base query
+    if clinic_id:
+        query = Patient.query.filter_by(clinic_id=clinic_id)
+    else:
+        # SUPER_ADMIN necesita especificar clinic_id
+        clinic_id_param = request.args.get('clinic_id', type=int)
+        if not clinic_id_param:
+            return jsonify({'error': 'clinic_id requerido para SUPER_ADMIN'}), 400
+        query = Patient.query.filter_by(clinic_id=clinic_id_param)
+    
+    # ✅ TAREA 2: Búsqueda con ILIKE (case-insensitive) que COMIENCE con el término
+    # Usamos f'{query_term}%' para buscar nombres/teléfonos que EMPIECEN con el término
+    query = query.filter(
+        or_(
+            Patient.name.ilike(f'{query_term}%'),
+            Patient.phone.ilike(f'{query_term}%')
+        )
+    )
+    
+    # Limitar a 10 resultados y ordenar por nombre
+    patients = query.order_by(Patient.name).limit(10).all()
+    
+    # Retornar formato simplificado para autocomplete
+    return jsonify([
+        {
+            'id': patient.id,
+            'name': patient.name,
+            'phone': patient.phone
+        }
+        for patient in patients
     ])
 
 
@@ -477,6 +552,8 @@ def create_appointment():
     # CREAR CITA
     # ========================================================================
     try:
+        notes_value = data.get('notes', '')
+        
         appointment = Appointment(
             clinic_id=clinic_id,
             professional_id=professional_id,
@@ -485,7 +562,7 @@ def create_appointment():
             start_datetime=start_dt,
             end_datetime=end_dt,
             status=AppointmentStatus.PROGRAMADA,
-            notes=data.get('notes', '').strip() or None
+            notes=notes_value.strip() if notes_value else None
         )
         
         db.session.add(appointment)
@@ -589,7 +666,8 @@ def update_appointment(id):
             appointment.service_id = data['service_id']
         
         if 'notes' in data:
-            appointment.notes = data['notes'].strip() or None
+            notes_value = data['notes']
+            appointment.notes = notes_value.strip() if notes_value else None
         
         db.session.commit()
         
@@ -823,49 +901,16 @@ def get_stats():
 
 
 # ============================================================================
-# API: BÚSQUEDA GLOBAL DE PACIENTES
+# API: BÚSQUEDA GLOBAL DE PACIENTES (Legacy - ahora está en /search/patients)
 # ============================================================================
 @api_bp.route('/search/patients', methods=['GET'])
 @login_required
-def search_patients():
+def search_patients_legacy():
     """
-    GET: Búsqueda global de pacientes por nombre o teléfono.
-    Query params:
-        - q (str): Término de búsqueda (mínimo 3 caracteres)
+    NOTA: Esta función está duplicada arriba (línea ~550).
+    Mantener solo la versión actualizada de arriba.
     """
-    query_term = request.args.get('q', '').strip()
-    
-    if len(query_term) < 3:
-        return jsonify({'error': 'El término de búsqueda debe tener al menos 3 caracteres'}), 400
-    
-    clinic_id = get_user_clinic_id()
-    
-    # Base query
-    if clinic_id:
-        query = Patient.query.filter_by(clinic_id=clinic_id)
-    else:
-        # SUPER_ADMIN necesita especificar clinic_id
-        clinic_id_param = request.args.get('clinic_id', type=int)
-        if not clinic_id_param:
-            return jsonify({'error': 'clinic_id requerido para SUPER_ADMIN'}), 400
-        query = Patient.query.filter_by(clinic_id=clinic_id_param)
-    
-    # Búsqueda por nombre, teléfono o email
-    query = query.filter(
-        or_(
-            Patient.name.ilike(f'%{query_term}%'),
-            Patient.phone.ilike(f'%{query_term}%'),
-            Patient.email.ilike(f'%{query_term}%')
-        )
-    )
-    
-    patients = query.order_by(Patient.name).limit(20).all()
-    
-    return jsonify({
-        'query': query_term,
-        'results': [patient.to_dict() for patient in patients],
-        'count': len(patients)
-    })
+    pass  # Esta función ya está implementada arriba
 
 
 # ============================================================================
@@ -1097,7 +1142,7 @@ def export_appointments_csv():
             apt.status.value,
             apt.notes or ''
         ])
-    
+
     # Preparar respuesta
     output.seek(0)
     filename = f"citas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
@@ -1224,4 +1269,4 @@ def api_not_found(error):
 def api_internal_error(error):
     """Handler para errores internos del servidor en el API"""
     db.session.rollback()
-    return jsonify({'error': 'Error interno del servidor'}), 500
+    return jsonify({'error': 'Error interno del servidor'}), 500    
