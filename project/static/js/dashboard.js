@@ -15,6 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadServices();
     loadAppointmentsList();
     loadCancelledAppointments();
+    
+    // ✨ NUEVO: Inicializar autocomplete de pacientes (Tarea 1b)
+    initPatientAutocomplete();
 });
 
 // ============================================================================
@@ -313,7 +316,6 @@ function saveAppointment() {
         saveBtn.disabled = false;
     });
 }
-
 // ============================================================================
 // ACTUALIZAR FECHAS (DRAG & DROP / RESIZE)
 // ============================================================================
@@ -692,6 +694,237 @@ function loadServices() {
             showToast('Error al cargar servicios', 'danger');
         });
 }
+// ============================================================================
+// 🔧 TAREA 1a: CARGAR ESTADÍSTICAS (IDs CORREGIDOS)
+// ============================================================================
+function loadStatistics() {
+    fetch('/api/stats')
+        .then(response => response.json())
+        .then(data => {
+            // 🔧 CORRECCIÓN: Usar los nuevos IDs del HTML (statPending, statCompleted, statToday)
+            
+            // Detectar rol y asignar estadísticas
+            if (data.my_appointments_programada !== undefined) {
+                // PROFESSIONAL
+                const statPending = document.getElementById('statPending');
+                const statCompleted = document.getElementById('statCompleted');
+                const statToday = document.getElementById('statToday');
+                
+                const labelPending = document.getElementById('labelPending');
+                const labelCompleted = document.getElementById('labelCompleted');
+                const labelToday = document.getElementById('labelToday');
+                
+                if (statPending) statPending.textContent = data.my_appointments_programada || 0;
+                if (statCompleted) statCompleted.textContent = data.my_appointments_completada || 0;
+                if (statToday) statToday.textContent = data.appointments_today || 0;
+                
+                // Actualizar labels (opcional, si el HTML lo requiere)
+                if (labelPending) labelPending.textContent = 'Citas Pendientes';
+                if (labelCompleted) labelCompleted.textContent = 'Citas Completadas';
+                if (labelToday) labelToday.textContent = 'Citas Hoy';
+            }
+            
+            // Animar contadores
+            animateCounters();
+        })
+        .catch(error => {
+            console.error('Error loading statistics:', error);
+            showToast('Error al cargar estadísticas', 'danger');
+        });
+}
+
+// ============================================================================
+// ANIMAR CONTADORES
+// ============================================================================
+function animateCounters() {
+    document.querySelectorAll('.stat-value').forEach(el => {
+        const target = parseInt(el.textContent) || 0;
+        let current = 0;
+        const increment = Math.max(1, target / 30);
+        const duration = 1000; // 1 segundo
+        const stepTime = duration / (target / increment);
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                el.textContent = target;
+                clearInterval(timer);
+            } else {
+                el.textContent = Math.floor(current);
+            }
+        }, stepTime);
+    });
+}
+
+// ============================================================================
+// 🔧 TAREA 1b: AUTOCOMPLETE DE BÚSQUEDA DE PACIENTES
+// ============================================================================
+function initPatientAutocomplete() {
+    const searchInput = document.getElementById('patient_id');
+    if (!searchInput) return;
+    
+    // Crear contenedor de resultados si no existe
+    let resultsContainer = document.getElementById('patient-search-results');
+    if (!resultsContainer) {
+        resultsContainer = document.createElement('div');
+        resultsContainer.id = 'patient-search-results';
+        resultsContainer.className = 'autocomplete-results';
+        resultsContainer.style.cssText = `
+            position: absolute;
+            z-index: 1050;
+            background: white;
+            border: 2px solid var(--primary);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            width: 100%;
+        `;
+        searchInput.parentElement.style.position = 'relative';
+        searchInput.parentElement.appendChild(resultsContainer);
+    }
+    
+    let searchTimeout = null;
+    
+    // Evento: Input en el campo de paciente
+    searchInput.addEventListener('input', function(e) {
+        const query = this.value.trim();
+        
+        // Limpiar timeout anterior
+        clearTimeout(searchTimeout);
+        
+        // Si la query es muy corta, ocultar resultados
+        if (query.length < 2) {
+            resultsContainer.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            return;
+        }
+        
+        // Debounce: Esperar 300ms antes de buscar
+        searchTimeout = setTimeout(() => {
+            searchPatients(query, resultsContainer, searchInput);
+        }, 300);
+    });
+    
+    // Cerrar resultados al hacer clic fuera
+    document.addEventListener('click', function(e) {
+        if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+            resultsContainer.style.display = 'none';
+        }
+    });
+}
+
+function searchPatients(query, resultsContainer, searchInput) {
+    // Mostrar loading
+    resultsContainer.innerHTML = `
+        <div class="text-center py-3">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <small class="d-block mt-2 text-muted">Buscando...</small>
+        </div>
+    `;
+    resultsContainer.style.display = 'block';
+    
+    // Llamar a la API de búsqueda
+    fetch(`/api/search/patients?q=${encodeURIComponent(query)}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error en la búsqueda');
+            }
+            return response.json();
+        })
+        .then(patients => {
+            if (patients.length === 0) {
+                resultsContainer.innerHTML = `
+                    <div class="autocomplete-item text-muted text-center py-3">
+                        <i class="fas fa-search me-2"></i>
+                        No se encontraron pacientes con "${query}"
+                    </div>
+                `;
+                return;
+            }
+            
+            // Renderizar resultados
+            resultsContainer.innerHTML = '';
+            
+            patients.forEach(patient => {
+                const item = document.createElement('div');
+                item.className = 'autocomplete-item';
+                item.style.cssText = `
+                    padding: 0.75rem 1rem;
+                    cursor: pointer;
+                    border-bottom: 1px solid #e5e7eb;
+                    transition: background 0.2s ease;
+                `;
+                
+                item.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${highlightMatch(patient.name, query)}</strong>
+                            <div class="small text-muted">
+                                <i class="fas fa-phone me-1"></i>${patient.phone}
+                            </div>
+                        </div>
+                        <i class="fas fa-chevron-right text-muted"></i>
+                    </div>
+                `;
+                
+                // Hover effect
+                item.addEventListener('mouseenter', function() {
+                    this.style.background = 'rgba(79, 70, 229, 0.1)';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.background = 'white';
+                });
+                
+                // Click: Seleccionar paciente
+                item.addEventListener('click', function() {
+                    selectPatient(patient, searchInput, resultsContainer);
+                });
+                
+                resultsContainer.appendChild(item);
+            });
+        })
+        .catch(error => {
+            console.error('Error searching patients:', error);
+            resultsContainer.innerHTML = `
+                <div class="autocomplete-item text-danger text-center py-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Error al buscar pacientes
+                </div>
+            `;
+        });
+}
+
+function highlightMatch(text, query) {
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<mark style="background: #fef08a; padding: 0 2px; border-radius: 2px;">$1</mark>');
+}
+
+function selectPatient(patient, searchInput, resultsContainer) {
+    // Establecer el valor del select
+    searchInput.value = patient.id;
+    
+    // Crear una opción temporal si no existe
+    let option = searchInput.querySelector(`option[value="${patient.id}"]`);
+    if (!option) {
+        option = document.createElement('option');
+        option.value = patient.id;
+        option.textContent = `${patient.name} (${patient.phone})`;
+        option.selected = true;
+        searchInput.appendChild(option);
+    } else {
+        option.selected = true;
+    }
+    
+    // Ocultar resultados
+    resultsContainer.style.display = 'none';
+    resultsContainer.innerHTML = '';
+    
+    // Mostrar feedback visual
+    showToast(`Paciente seleccionado: ${patient.name}`, 'success');
+}
 
 // ============================================================================
 // CREAR PACIENTE RÁPIDO
@@ -755,56 +988,6 @@ function saveNewPatient() {
     .finally(() => {
         saveBtn.innerHTML = originalText;
         saveBtn.disabled = false;
-    });
-}
-
-// ============================================================================
-// CARGAR ESTADÍSTICAS
-// ============================================================================
-function loadStatistics() {
-    fetch('/api/stats')
-        .then(response => response.json())
-        .then(data => {
-            // Detectar rol y asignar estadísticas
-            if (data.my_appointments !== undefined) {
-                // PROFESSIONAL
-                document.getElementById('stat1').textContent = data.my_appointments_programada || 0;
-                document.getElementById('label1').textContent = 'Citas Pendientes';
-                
-                document.getElementById('stat2').textContent = data.my_appointments_completada || 0;
-                document.getElementById('label2').textContent = 'Citas Completadas';
-                
-                document.getElementById('stat3').textContent = data.appointments_today || 0;
-                document.getElementById('label3').textContent = 'Citas Hoy';
-            }
-            
-            animateCounters();
-        })
-        .catch(error => {
-            console.error('Error loading statistics:', error);
-        });
-}
-
-// ============================================================================
-// ANIMAR CONTADORES
-// ============================================================================
-function animateCounters() {
-    document.querySelectorAll('.stat-value').forEach(el => {
-        const target = parseInt(el.textContent) || 0;
-        let current = 0;
-        const increment = Math.max(1, target / 30);
-        const duration = 1000; // 1 segundo
-        const stepTime = duration / (target / increment);
-        
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                el.textContent = target;
-                clearInterval(timer);
-            } else {
-                el.textContent = Math.floor(current);
-            }
-        }, stepTime);
     });
 }
 
@@ -876,6 +1059,22 @@ style.textContent = `
     @keyframes fadeOut {
         from { opacity: 1; }
         to { opacity: 0; }
+    }
+    
+    /* Estilos para autocomplete */
+    .autocomplete-results::-webkit-scrollbar {
+        width: 8px;
+    }
+    .autocomplete-results::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 0 0 12px 0;
+    }
+    .autocomplete-results::-webkit-scrollbar-thumb {
+        background: var(--primary);
+        border-radius: 4px;
+    }
+    .autocomplete-results::-webkit-scrollbar-thumb:hover {
+        background: var(--primary-dark);
     }
 `;
 document.head.appendChild(style);
