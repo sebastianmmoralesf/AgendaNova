@@ -343,6 +343,51 @@
     }
 
     /* ============================================================ */
+    /* ADMIN INFO SECTION (dentro del modal de edición) */
+    /* ============================================================ */
+    .admin-info-section {
+        background: var(--light);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        border-left: 4px solid var(--warning);
+    }
+
+    .admin-info-section h6 {
+        color: var(--warning);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .admin-info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+    }
+
+    .admin-info-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .admin-info-label {
+        color: var(--gray);
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .admin-info-value {
+        color: var(--dark);
+        font-weight: 600;
+    }
+
+    /* ============================================================ */
     /* EMPTY STATE */
     /* ============================================================ */
     .empty-clinics {
@@ -403,6 +448,14 @@
 
     [data-theme="dark"] .clinics-table tbody tr:hover {
         background: #0f172a;
+    }
+
+    [data-theme="dark"] .admin-info-section {
+        background: #0f172a;
+    }
+
+    [data-theme="dark"] .admin-info-item {
+        background: #1e293b;
     }
 </style>
 {% endblock %}
@@ -529,9 +582,8 @@
         </div>
     </div>
 </div>
-
 <!-- ============================================================ -->
-<!-- MODAL: CREATE CLINIC -->
+<!-- MODAL: CREATE CLINIC (SIN CAMBIOS) -->
 <!-- ============================================================ -->
 <div class="modal fade" id="createClinicModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -665,7 +717,7 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- MODAL: CREDENTIALS DISPLAY -->
+<!-- MODAL: CREDENTIALS DISPLAY (SIN CAMBIOS) -->
 <!-- ============================================================ -->
 <div class="modal fade" id="credentialsModal" tabindex="-1">
     <div class="modal-dialog">
@@ -697,8 +749,236 @@
         </div>
     </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- ✨ NUEVO: MODAL EDIT CLINIC -->
+<!-- ============================================================ -->
+<div class="modal fade" id="editClinicModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header super-admin">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Clínica
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editClinicForm">
+                    <input type="hidden" id="edit_clinic_id">
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Edita la información de la clínica. Los cambios se aplicarán inmediatamente.
+                    </div>
+
+                    <h6 class="mb-3">
+                        <i class="fas fa-hospital me-2"></i>Información de la Clínica
+                    </h6>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_clinic_name" class="form-label">
+                                <i class="fas fa-hospital me-1"></i>Nombre de la Clínica *
+                            </label>
+                            <input type="text" class="form-control" id="edit_clinic_name" 
+                                   placeholder="Ej: Clínica Salud Total" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_clinic_phone" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Teléfono
+                            </label>
+                            <input type="tel" class="form-control" id="edit_clinic_phone" 
+                                   placeholder="+51 999 888 777">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_clinic_email" class="form-label">
+                            <i class="fas fa-envelope me-1"></i>Email
+                        </label>
+                        <input type="email" class="form-control" id="edit_clinic_email" 
+                               placeholder="contacto@clinica.com">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_clinic_address" class="form-label">
+                            <i class="fas fa-map-marker-alt me-1"></i>Dirección
+                        </label>
+                        <input type="text" class="form-control" id="edit_clinic_address" 
+                               placeholder="Av. Principal 123, Lima">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="edit_clinic_logo_url" class="form-label">
+                            <i class="fas fa-image me-1"></i>URL del Logo
+                        </label>
+                        <input type="url" class="form-control" id="edit_clinic_logo_url" 
+                               placeholder="https://example.com/logo.png">
+                        <small class="text-muted">Sube tu logo a un servicio como Imgur y pega la URL aquí</small>
+                    </div>
+
+                    <!-- Vista Previa del Logo -->
+                    <div class="mb-3">
+                        <label class="form-label">Vista Previa del Logo:</label>
+                        <div class="p-3 bg-light rounded text-center">
+                            <img id="edit_logo_preview" 
+                                 src="https://via.placeholder.com/150x150?text=Sin+Logo" 
+                                 alt="Logo Preview" 
+                                 style="max-width: 150px; max-height: 150px; border-radius: 8px;">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_clinic_plan" class="form-label">
+                                <i class="fas fa-tag me-1"></i>Plan
+                            </label>
+                            <select class="form-select" id="edit_clinic_plan">
+                                <option value="free">Free</option>
+                                <option value="basic">Basic</option>
+                                <option value="premium">Premium</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_clinic_theme_color" class="form-label">
+                                <i class="fas fa-palette me-1"></i>Color de Tema
+                            </label>
+                            <div class="d-flex gap-2 align-items-center">
+                                <input type="color" class="form-control form-control-color" 
+                                       id="edit_clinic_theme_color" value="#4F46E5" 
+                                       style="width: 80px;">
+                                <div class="color-preview" id="edit_color_preview" 
+                                     style="width: 50px; height: 50px; border-radius: 8px; border: 2px solid var(--border); background-color: #4F46E5;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- ✨ SECCIÓN: Administrador de la Clínica -->
+                    <div class="admin-info-section">
+                        <h6>
+                            <i class="fas fa-user-shield me-2"></i>
+                            Administrador de la Clínica
+                        </h6>
+                        
+                        <div class="admin-info-item">
+                            <div>
+                                <div class="admin-info-label">Username</div>
+                                <div class="admin-info-value" id="edit_admin_username">-</div>
+                            </div>
+                        </div>
+
+                        <div class="admin-info-item">
+                            <div>
+                                <div class="admin-info-label">Email</div>
+                                <div class="admin-info-value" id="edit_admin_email">-</div>
+                            </div>
+                        </div>
+
+                        <div class="admin-info-item">
+                            <div>
+                                <div class="admin-info-label">Nombre Completo</div>
+                                <div class="admin-info-value" id="edit_admin_full_name">-</div>
+                            </div>
+                        </div>
+
+                        <!-- ✨ Botón de Resetear Contraseña -->
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-warning w-100" 
+                                    id="btnResetAdminPassword"
+                                    onclick="resetClinicAdminPassword()">
+                                <i class="fas fa-key me-2"></i>Resetear Contraseña del Administrador
+                            </button>
+                            <input type="hidden" id="edit_admin_user_id">
+                        </div>
+
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <small>
+                                <strong>Importante:</strong> Al resetear la contraseña, se generará una clave temporal 
+                                que deberás compartir con el administrador de la clínica.
+                            </small>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </button>
+                <button type="button" class="btn btn-success" onclick="saveClinicChanges()">
+                    <i class="fas fa-save me-1"></i>Guardar Cambios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- ✨ NUEVO: MODAL PASSWORD RESET SUCCESS -->
+<!-- ============================================================ -->
+<div class="modal fade" id="passwordResetModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fas fa-key me-2"></i>Contraseña Reseteada
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>¡ATENCIÓN!</strong> Esta contraseña temporal solo se mostrará una vez. 
+                    Guárdala y compártela de forma segura con el administrador.
+                </div>
+
+                <div class="card">
+                    <div class="card-body" id="passwordResetDisplay">
+                        <!-- Se llenará dinámicamente con JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="copyResetPassword()">
+                    <i class="fas fa-copy me-1"></i>Copiar al Portapapeles
+                </button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/super_admin.js') }}"></script>
+
+<!-- ✨ Script adicional para previsualización del logo en edición -->
+<script>
+    // Preview del logo al cambiar URL en modal de edición
+    document.getElementById('edit_clinic_logo_url')?.addEventListener('input', function() {
+        const logoPreview = document.getElementById('edit_logo_preview');
+        const url = this.value.trim();
+        
+        if (url) {
+            logoPreview.src = url;
+            logoPreview.onerror = function() {
+                this.src = 'https://via.placeholder.com/150x150?text=URL+Invalida';
+            };
+        } else {
+            logoPreview.src = 'https://via.placeholder.com/150x150?text=Sin+Logo';
+        }
+    });
+
+    // Preview del color al cambiar en modal de edición
+    document.getElementById('edit_clinic_theme_color')?.addEventListener('input', function() {
+        const colorPreview = document.getElementById('edit_color_preview');
+        colorPreview.style.backgroundColor = this.value;
+    });
+</script>
 {% endblock %}
