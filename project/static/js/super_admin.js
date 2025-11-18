@@ -4,6 +4,8 @@
 
 let currentClinicId = null;
 let credentialsData = null;
+let currentAdminUserId = null; // ✨ NUEVO: Para almacenar el ID del admin al resetear contraseña
+let passwordResetData = null;  // ✨ NUEVO: Para almacenar datos del reset de contraseña
 
 // ============================================================================
 // INICIALIZACIÓN
@@ -173,7 +175,7 @@ function loadClinics() {
 }
 
 // ============================================================================
-// MODAL: CREAR CLÍNICA
+// MODAL: CREAR CLÍNICA (SIN CAMBIOS)
 // ============================================================================
 function openCreateClinicModal() {
     const modal = new bootstrap.Modal(document.getElementById('createClinicModal'));
@@ -186,7 +188,7 @@ function openCreateClinicModal() {
 }
 
 // ============================================================================
-// GUARDAR CLÍNICA
+// GUARDAR CLÍNICA (SIN CAMBIOS)
 // ============================================================================
 function saveClinic() {
     // Obtener datos del formulario
@@ -294,7 +296,7 @@ function saveClinic() {
 }
 
 // ============================================================================
-// MODAL: MOSTRAR CREDENCIALES
+// MODAL: MOSTRAR CREDENCIALES (SIN CAMBIOS)
 // ============================================================================
 function showCredentialsModal() {
     if (!credentialsData) return;
@@ -330,7 +332,7 @@ function showCredentialsModal() {
 }
 
 // ============================================================================
-// COPIAR CREDENCIALES
+// COPIAR CREDENCIALES (SIN CAMBIOS)
 // ============================================================================
 function copyCredentials() {
     if (!credentialsData) return;
@@ -349,15 +351,299 @@ Password: ${credentialsData.admin_password}
         showToast('Error al copiar credenciales', 'danger');
     });
 }
+// ============================================================================
+// ✨ NUEVO: EDITAR CLÍNICA
+// ============================================================================
+function editClinic(id) {
+    currentClinicId = id;
+    
+    // Mostrar loading en el botón mientras carga
+    const allEditButtons = document.querySelectorAll('.btn-action-sm.btn-primary');
+    allEditButtons.forEach(btn => {
+        if (btn.onclick && btn.onclick.toString().includes(`editClinic(${id})`)) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        }
+    });
+    
+    fetch(`/super-admin/api/clinics/${id}`)
+        .then(response => response.json())
+        .then(clinic => {
+            // Llenar campos del formulario
+            document.getElementById('edit_clinic_id').value = clinic.id;
+            document.getElementById('edit_clinic_name').value = clinic.name;
+            document.getElementById('edit_clinic_phone').value = clinic.phone || '';
+            document.getElementById('edit_clinic_email').value = clinic.email || '';
+            document.getElementById('edit_clinic_address').value = clinic.address || '';
+            document.getElementById('edit_clinic_logo_url').value = clinic.logo_url || '';
+            document.getElementById('edit_clinic_plan').value = clinic.plan;
+            document.getElementById('edit_clinic_theme_color').value = clinic.theme_color;
+            
+            // Actualizar preview del logo
+            const logoPreview = document.getElementById('edit_logo_preview');
+            if (clinic.logo_url) {
+                logoPreview.src = clinic.logo_url;
+                logoPreview.onerror = function() {
+                    this.src = 'https://via.placeholder.com/150x150?text=URL+Invalida';
+                };
+            } else {
+                logoPreview.src = 'https://via.placeholder.com/150x150?text=Sin+Logo';
+            }
+            
+            // Actualizar preview del color
+            document.getElementById('edit_color_preview').style.backgroundColor = clinic.theme_color;
+            
+            // ✨ Buscar el CLINIC_ADMIN de esta clínica
+            const clinicAdmin = clinic.users ? clinic.users.find(u => u.role === 'CLINIC_ADMIN') : null;
+            
+            if (clinicAdmin) {
+                // Mostrar información del admin
+                document.getElementById('edit_admin_username').textContent = clinicAdmin.username;
+                document.getElementById('edit_admin_email').textContent = clinicAdmin.email;
+                document.getElementById('edit_admin_full_name').textContent = clinicAdmin.full_name || '-';
+                document.getElementById('edit_admin_user_id').value = clinicAdmin.id;
+                
+                // Habilitar botón de resetear contraseña
+                document.getElementById('btnResetAdminPassword').disabled = false;
+                currentAdminUserId = clinicAdmin.id;
+            } else {
+                // No hay admin (caso raro, pero manejarlo)
+                document.getElementById('edit_admin_username').textContent = 'No asignado';
+                document.getElementById('edit_admin_email').textContent = '-';
+                document.getElementById('edit_admin_full_name').textContent = '-';
+                document.getElementById('edit_admin_user_id').value = '';
+                
+                // Deshabilitar botón de resetear contraseña
+                document.getElementById('btnResetAdminPassword').disabled = true;
+                currentAdminUserId = null;
+            }
+            
+            // Abrir modal
+            const modal = new bootstrap.Modal(document.getElementById('editClinicModal'));
+            modal.show();
+            
+            // Restaurar botones de edición
+            allEditButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-edit"></i>';
+            });
+        })
+        .catch(error => {
+            console.error('Error loading clinic:', error);
+            showToast('Error al cargar datos de la clínica', 'danger');
+            
+            // Restaurar botones en caso de error
+            allEditButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-edit"></i>';
+            });
+        });
+}
 
 // ============================================================================
-// VER DETALLES DE CLÍNICA
+// ✨ NUEVO: GUARDAR CAMBIOS DE CLÍNICA
+// ============================================================================
+function saveClinicChanges() {
+    const clinicId = document.getElementById('edit_clinic_id').value;
+    const name = document.getElementById('edit_clinic_name').value.trim();
+    const phone = document.getElementById('edit_clinic_phone').value.trim();
+    const email = document.getElementById('edit_clinic_email').value.trim();
+    const address = document.getElementById('edit_clinic_address').value.trim();
+    const logoUrl = document.getElementById('edit_clinic_logo_url').value.trim();
+    const plan = document.getElementById('edit_clinic_plan').value;
+    const themeColor = document.getElementById('edit_clinic_theme_color').value;
+    
+    // Validaciones
+    if (!name) {
+        showToast('El nombre de la clínica es requerido', 'warning');
+        return;
+    }
+    
+    if (email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showToast('El email no es válido', 'warning');
+            return;
+        }
+    }
+    
+    // Preparar datos
+    const formData = {
+        name: name,
+        phone: phone || null,
+        email: email || null,
+        address: address || null,
+        logo_url: logoUrl || null,
+        plan: plan,
+        theme_color: themeColor
+    };
+    
+    // Deshabilitar botón
+    const saveBtn = document.querySelector('#editClinicModal .btn-success');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+    saveBtn.disabled = true;
+    
+    // Enviar petición
+    fetch(`/super-admin/api/clinics/${clinicId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+    .then(({ok, data}) => {
+        if (!ok) {
+            showToast(data.error || 'Error al guardar cambios', 'danger');
+            throw new Error(data.error);
+        }
+        
+        // Éxito
+        showToast('✅ Clínica actualizada exitosamente', 'success');
+        
+        // Cerrar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('editClinicModal'));
+        modal.hide();
+        
+        // Recargar tabla de clínicas
+        loadClinics();
+        loadGlobalStatistics();
+    })
+    .catch(error => {
+        console.error('Error saving clinic changes:', error);
+    })
+    .finally(() => {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+// ============================================================================
+// ✨ NUEVO: RESETEAR CONTRASEÑA DEL ADMINISTRADOR
+// ============================================================================
+function resetClinicAdminPassword() {
+    const adminUserId = document.getElementById('edit_admin_user_id').value;
+    const adminUsername = document.getElementById('edit_admin_username').textContent;
+    const adminEmail = document.getElementById('edit_admin_email').textContent;
+    
+    if (!adminUserId) {
+        showToast('No se puede resetear: administrador no encontrado', 'danger');
+        return;
+    }
+    
+    // Confirmación
+    const confirmMessage = `¿Estás seguro de resetear la contraseña de "${adminUsername}"?\n\nSe generará una contraseña temporal que deberás compartir con el administrador.`;
+    
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+    
+    // Deshabilitar botón
+    const resetBtn = document.getElementById('btnResetAdminPassword');
+    const originalText = resetBtn.innerHTML;
+    resetBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Reseteando...';
+    resetBtn.disabled = true;
+    
+    // Enviar petición al backend
+    fetch(`/super-admin/api/users/${adminUserId}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})  // El backend genera la contraseña automáticamente
+    })
+    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+    .then(({ok, data}) => {
+        if (!ok) {
+            showToast(data.error || 'Error al resetear contraseña', 'danger');
+            throw new Error(data.error);
+        }
+        
+        // Éxito - Guardar datos para mostrar en el modal
+        passwordResetData = {
+            username: data.username,
+            email: data.email,
+            new_password: data.new_password
+        };
+        
+        // Cerrar modal de edición
+        const editModal = bootstrap.Modal.getInstance(document.getElementById('editClinicModal'));
+        editModal.hide();
+        
+        // Mostrar modal de contraseña reseteada
+        showPasswordResetModal();
+        
+        showToast('✅ Contraseña reseteada exitosamente', 'success');
+    })
+    .catch(error => {
+        console.error('Error resetting password:', error);
+    })
+    .finally(() => {
+        resetBtn.innerHTML = originalText;
+        resetBtn.disabled = false;
+    });
+}
+
+// ============================================================================
+// ✨ NUEVO: MOSTRAR MODAL DE CONTRASEÑA RESETEADA
+// ============================================================================
+function showPasswordResetModal() {
+    if (!passwordResetData) return;
+    
+    const modal = new bootstrap.Modal(document.getElementById('passwordResetModal'));
+    const display = document.getElementById('passwordResetDisplay');
+    
+    display.innerHTML = `
+        <h6 class="mb-3">
+            <i class="fas fa-user-shield me-2"></i>
+            Administrador: <strong>${passwordResetData.username}</strong>
+        </h6>
+        <hr>
+        <div class="mb-2">
+            <strong><i class="fas fa-user me-2"></i>Username:</strong>
+            <code class="ms-2">${passwordResetData.username}</code>
+        </div>
+        <div class="mb-2">
+            <strong><i class="fas fa-envelope me-2"></i>Email:</strong>
+            <code class="ms-2">${passwordResetData.email}</code>
+        </div>
+        <div class="mb-2">
+            <strong><i class="fas fa-key me-2"></i>Nueva Contraseña:</strong>
+            <code class="ms-2 text-danger fw-bold">${passwordResetData.new_password}</code>
+        </div>
+    `;
+    
+    modal.show();
+}
+
+// ============================================================================
+// ✨ NUEVO: COPIAR CONTRASEÑA RESETEADA
+// ============================================================================
+function copyResetPassword() {
+    if (!passwordResetData) return;
+    
+    const text = `
+Administrador: ${passwordResetData.username}
+Email: ${passwordResetData.email}
+Nueva Contraseña: ${passwordResetData.new_password}
+
+⚠️ IMPORTANTE: Esta es una contraseña temporal. El administrador debe cambiarla después del primer inicio de sesión.
+    `.trim();
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('📋 Contraseña copiada al portapapeles', 'success');
+    }).catch(err => {
+        console.error('Error al copiar:', err);
+        showToast('Error al copiar la contraseña', 'danger');
+    });
+}
+
+// ============================================================================
+// VER DETALLES DE CLÍNICA (SIN CAMBIOS)
 // ============================================================================
 function viewClinic(id) {
     fetch(`/super-admin/api/clinics/${id}`)
         .then(response => response.json())
         .then(clinic => {
-            // Crear modal dinámico con detalles
+            const stats = clinic.statistics;
+            
             const modalHtml = `
                 <div class="modal fade" id="viewClinicModal" tabindex="-1">
                     <div class="modal-dialog modal-lg">
@@ -382,15 +668,15 @@ function viewClinic(id) {
                                     </div>
                                     <div class="col-md-6">
                                         <h6 class="mb-3">Estadísticas</h6>
-                                        <p><strong>Usuarios:</strong> ${clinic.statistics.users.total}</p>
-                                        <p class="ms-3 text-muted">• Administradores: ${clinic.statistics.users.admins}</p>
-                                        <p class="ms-3 text-muted">• Profesionales: ${clinic.statistics.users.professionals}</p>
-                                        <p><strong>Pacientes:</strong> ${clinic.statistics.patients}</p>
-                                        <p><strong>Servicios:</strong> ${clinic.statistics.services}</p>
-                                        <p><strong>Citas:</strong> ${clinic.statistics.appointments.total}</p>
-                                        <p class="ms-3 text-muted">• Programadas: ${clinic.statistics.appointments.programadas}</p>
-                                        <p class="ms-3 text-muted">• Completadas: ${clinic.statistics.appointments.completadas}</p>
-                                        <p class="ms-3 text-muted">• Canceladas: ${clinic.statistics.appointments.canceladas}</p>
+                                        <p><strong>Usuarios:</strong> ${stats.users.total}</p>
+                                        <p class="ms-3 text-muted">• Administradores: ${stats.users.admins}</p>
+                                        <p class="ms-3 text-muted">• Profesionales: ${stats.users.professionals}</p>
+                                        <p><strong>Pacientes:</strong> ${stats.patients}</p>
+                                        <p><strong>Servicios:</strong> ${stats.services}</p>
+                                        <p><strong>Citas:</strong> ${stats.appointments.total}</p>
+                                        <p class="ms-3 text-muted">• Programadas: ${stats.appointments.programadas}</p>
+                                        <p class="ms-3 text-muted">• Completadas: ${stats.appointments.completadas}</p>
+                                        <p class="ms-3 text-muted">• Canceladas: ${stats.appointments.canceladas}</p>
                                     </div>
                                 </div>
                                 
@@ -454,21 +740,7 @@ function viewClinic(id) {
 }
 
 // ============================================================================
-// EDITAR CLÍNICA
-// ============================================================================
-function editClinic(id) {
-    // TODO: Implementar modal de edición
-    // Por ahora, simplemente mostrar alerta
-    showToast('Función de edición en desarrollo', 'info');
-    
-    // Placeholder para futuro desarrollo:
-    // 1. GET /super-admin/api/clinics/:id
-    // 2. Llenar formulario similar al de crear
-    // 3. PUT /super-admin/api/clinics/:id
-}
-
-// ============================================================================
-// TOGGLE STATUS (ACTIVAR/SUSPENDER)
+// TOGGLE STATUS (ACTIVAR/SUSPENDER) - SIN CAMBIOS
 // ============================================================================
 function toggleClinicStatus(id) {
     // Obtener datos actuales de la clínica
@@ -508,7 +780,7 @@ function toggleClinicStatus(id) {
 }
 
 // ============================================================================
-// ELIMINAR CLÍNICA
+// ELIMINAR CLÍNICA - SIN CAMBIOS
 // ============================================================================
 function deleteClinic(id, name) {
     // Paso 1: Obtener estadísticas para mostrar al usuario
@@ -554,7 +826,7 @@ Se eliminará permanentemente la clínica "${name}" y TODOS sus datos:
             .then(response => response.json())
             .then(data => {
                 showToast(
-                    `✅ Clínica "${name}" eliminada permanentemente. ${data.deleted_appointments} citas eliminadas.`,
+                    `✅ Clínica "${name}" eliminada permanentemente. ${data.deleted.appointments} citas eliminadas.`,
                     'success'
                 );
                 
@@ -574,7 +846,7 @@ Se eliminará permanentemente la clínica "${name}" y TODOS sus datos:
 }
 
 // ============================================================================
-// HELPER: TOAST
+// HELPER: TOAST - SIN CAMBIOS
 // ============================================================================
 function showToast(message, type = 'info') {
     const toastContainer = document.createElement('div');
@@ -611,7 +883,7 @@ function showToast(message, type = 'info') {
 }
 
 // ============================================================================
-// ANIMACIONES CSS
+// ANIMACIONES CSS - SIN CAMBIOS
 // ============================================================================
 const style = document.createElement('style');
 style.textContent = `
@@ -640,7 +912,10 @@ window.loadClinics = loadClinics;
 window.openCreateClinicModal = openCreateClinicModal;
 window.saveClinic = saveClinic;
 window.copyCredentials = copyCredentials;
+window.editClinic = editClinic;                   // ✨ NUEVA
+window.saveClinicChanges = saveClinicChanges;     // ✨ NUEVA
+window.resetClinicAdminPassword = resetClinicAdminPassword; // ✨ NUEVA
+window.copyResetPassword = copyResetPassword;     // ✨ NUEVA
 window.viewClinic = viewClinic;
-window.editClinic = editClinic;
 window.toggleClinicStatus = toggleClinicStatus;
 window.deleteClinic = deleteClinic;
