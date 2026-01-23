@@ -937,6 +937,103 @@ function selectPatient(patient, searchInput, hiddenInput, resultsContainer) {
 }
 
 // ============================================================================
+// 🔧 CORRECCIÓN: FUNCIONES FALTANTES PARA CREAR NUEVO PACIENTE
+// ============================================================================
+function openNewPatientModal() {
+    const modal = new bootstrap.Modal(document.getElementById('newPatientModal'));
+    const form = document.getElementById('newPatientForm');
+    
+    // Resetear formulario
+    form.reset();
+    
+    modal.show();
+}
+
+function saveNewPatient() {
+    const name = document.getElementById('patient_name').value.trim();
+    const phone = document.getElementById('patient_phone').value.trim();
+    const email = document.getElementById('patient_email').value.trim();
+    const notes = document.getElementById('patient_notes').value.trim();
+    
+    // Validaciones
+    if (!name) {
+        showToast('El nombre del paciente es requerido', 'warning');
+        return;
+    }
+    
+    if (!phone) {
+        showToast('El teléfono del paciente es requerido', 'warning');
+        return;
+    }
+    
+    // Validar formato de teléfono (básico)
+    if (phone.length < 7) {
+        showToast('El teléfono debe tener al menos 7 dígitos', 'warning');
+        return;
+    }
+    
+    // Validar email si se proporciona
+    if (email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            showToast('El email no es válido', 'warning');
+            return;
+        }
+    }
+    
+    // Preparar datos
+    const formData = {
+        name: name,
+        phone: phone,
+        email: email || null,
+        notes: notes || null
+    };
+    
+    // Deshabilitar botón
+    const saveBtn = document.querySelector('#newPatientModal .btn-primary');
+    const originalText = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+    saveBtn.disabled = true;
+    
+    // Enviar petición
+    fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+    .then(({ok, data}) => {
+        if (!ok) {
+            showToast(data.error || 'Error al crear paciente', 'danger');
+            throw new Error(data.error);
+        }
+        
+        // Éxito: Cerrar modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('newPatientModal'));
+        modal.hide();
+        
+        // Auto-seleccionar el paciente recién creado en el formulario de citas
+        const patient = data.patient;
+        const searchInput = document.getElementById('patient_search');
+        const hiddenInput = document.getElementById('patient_id');
+        
+        if (searchInput && hiddenInput) {
+            searchInput.value = patient.name;
+            hiddenInput.value = patient.id;
+        }
+        
+        showToast(`✅ Paciente "${patient.name}" creado exitosamente`, 'success');
+    })
+    .catch(error => {
+        console.error('Error creating patient:', error);
+    })
+    .finally(() => {
+        saveBtn.innerHTML = originalText;
+        saveBtn.disabled = false;
+    });
+}
+
+// ============================================================================
 // HELPERS
 // ============================================================================
 function formatDateTimeLocal(date) {
