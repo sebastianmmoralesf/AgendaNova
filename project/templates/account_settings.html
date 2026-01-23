@@ -1347,24 +1347,46 @@
         const newPassword = document.getElementById('newPassword').value;
         const confirmPassword = this.value;
         
+        // 🆔 ID único para el mensaje de error
+        const errorId = 'confirm-password-error';
+        
         if (confirmPassword.length > 0) {
             if (newPassword !== confirmPassword) {
                 this.classList.add('is-invalid');
+                this.classList.remove('is-valid');
                 
-                if (!this.nextElementSibling || !this.nextElementSibling.classList.contains('invalid-feedback')) {
-                    const errorMsg = document.createElement('div');
+                // ✅ Buscar mensaje existente por ID
+                let errorMsg = document.getElementById(errorId);
+                
+                if (!errorMsg) {
+                    // Solo crear si NO existe
+                    errorMsg = document.createElement('div');
+                    errorMsg.id = errorId;
                     errorMsg.className = 'invalid-feedback';
-                    errorMsg.textContent = 'Las contraseñas no coinciden';
+                    errorMsg.style.display = 'block'; // Forzar display
                     this.parentNode.appendChild(errorMsg);
                 }
+                
+                // Actualizar texto (siempre)
+                errorMsg.textContent = 'Las contraseñas no coinciden';
+            
             } else {
                 this.classList.remove('is-invalid');
                 this.classList.add('is-valid');
                 
-                const errorMsg = this.nextElementSibling;
-                if (errorMsg && errorMsg.classList.contains('invalid-feedback')) {
+                // Eliminar mensaje si existe
+                const errorMsg = document.getElementById(errorId);
+                if (errorMsg) {
                     errorMsg.remove();
                 }
+            }
+        } else {
+            // Si el campo está vacío, limpiar estados
+            this.classList.remove('is-invalid', 'is-valid');
+            
+            const errorMsg = document.getElementById(errorId);
+            if (errorMsg) {
+                errorMsg.remove();
             }
         }
     });
