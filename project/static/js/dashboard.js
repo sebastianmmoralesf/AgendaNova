@@ -193,6 +193,8 @@ function openAppointmentModal(startStr, endStr) {
     document.getElementById('start_datetime').value = formatDateTimeLocal(new Date(startStr));
     document.getElementById('end_datetime').value = formatDateTimeLocal(new Date(endStr));
     
+    initPatientAutocomplete();
+    
     modal.show();
 }
 
@@ -760,7 +762,9 @@ function animateCounters() {
 // 🔧 TAREA 1b: AUTOCOMPLETE DE BÚSQUEDA DE PACIENTES
 // ============================================================================
 function initPatientAutocomplete() {
-    const searchInput = document.getElementById('patient_id');
+    const searchInput = document.getElementById('patient_search');
+    const hiddenInput = document.getElementById('patient_id');
+    
     if (!searchInput) return;
     
     // Crear contenedor de resultados si no existe
@@ -781,16 +785,24 @@ function initPatientAutocomplete() {
             display: none;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
             width: 100%;
+            margin-top: 2px;
         `;
-        searchInput.parentElement.style.position = 'relative';
         searchInput.parentElement.appendChild(resultsContainer);
     }
     
     let searchTimeout = null;
     
-    // Evento: Input en el campo de paciente
+    // Evento: Input en el campo de búsqueda
     searchInput.addEventListener('input', function(e) {
         const query = this.value.trim();
+        
+        // Limpiar hidden input si se borra el texto
+        if (!query) {
+            hiddenInput.value = '';
+            resultsContainer.style.display = 'none';
+            resultsContainer.innerHTML = '';
+            return;
+        }
         
         // Limpiar timeout anterior
         clearTimeout(searchTimeout);
@@ -804,7 +816,7 @@ function initPatientAutocomplete() {
         
         // Debounce: Esperar 300ms antes de buscar
         searchTimeout = setTimeout(() => {
-            searchPatients(query, resultsContainer, searchInput);
+            searchPatients(query, resultsContainer, searchInput, hiddenInput);
         }, 300);
     });
     
@@ -814,9 +826,16 @@ function initPatientAutocomplete() {
             resultsContainer.style.display = 'none';
         }
     });
+    
+    // Reabrir al hacer focus si hay resultados previos
+    searchInput.addEventListener('focus', function() {
+        if (resultsContainer.children.length > 0) {
+            resultsContainer.style.display = 'block';
+        }
+    });
 }
 
-function searchPatients(query, resultsContainer, searchInput) {
+function searchPatients(query, resultsContainer, searchInput, hiddenInput) {
     // Mostrar loading
     resultsContainer.innerHTML = `
         <div class="text-center py-3">
@@ -880,7 +899,7 @@ function searchPatients(query, resultsContainer, searchInput) {
                 
                 // Click: Seleccionar paciente
                 item.addEventListener('click', function() {
-                    selectPatient(patient, searchInput, resultsContainer);
+                    selectPatient(patient, searchInput, hiddenInput, resultsContainer);
                 });
                 
                 resultsContainer.appendChild(item);
@@ -902,93 +921,19 @@ function highlightMatch(text, query) {
     return text.replace(regex, '<mark style="background: #fef08a; padding: 0 2px; border-radius: 2px;">$1</mark>');
 }
 
-function selectPatient(patient, searchInput, resultsContainer) {
-    // Establecer el valor del select
-    searchInput.value = patient.id;
+function selectPatient(patient, searchInput, hiddenInput, resultsContainer) {
+    // Establecer el nombre visible
+    searchInput.value = patient.name;
     
-    // Crear una opción temporal si no existe
-    let option = searchInput.querySelector(`option[value="${patient.id}"]`);
-    if (!option) {
-        option = document.createElement('option');
-        option.value = patient.id;
-        option.textContent = `${patient.name} (${patient.phone})`;
-        option.selected = true;
-        searchInput.appendChild(option);
-    } else {
-        option.selected = true;
-    }
+    // Establecer el ID oculto
+    hiddenInput.value = patient.id;
     
     // Ocultar resultados
     resultsContainer.style.display = 'none';
     resultsContainer.innerHTML = '';
     
     // Mostrar feedback visual
-    showToast(`Paciente seleccionado: ${patient.name}`, 'success');
-}
-
-// ============================================================================
-// CREAR PACIENTE RÁPIDO
-// ============================================================================
-function openNewPatientModal() {
-    const modal = new bootstrap.Modal(document.getElementById('newPatientModal'));
-    document.getElementById('newPatientForm').reset();
-    modal.show();
-}
-
-function saveNewPatient() {
-    const name = document.getElementById('patient_name').value.trim();
-    const phone = document.getElementById('patient_phone').value.trim();
-    const email = document.getElementById('patient_email').value.trim();
-    const notes = document.getElementById('patient_notes').value.trim();
-    
-    if (!name || !phone) {
-        showToast('Nombre y teléfono son requeridos', 'warning');
-        return;
-    }
-    
-    const saveBtn = document.querySelector('#newPatientModal .btn-primary');
-    const originalText = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
-    saveBtn.disabled = true;
-    
-    fetch('/api/patients', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            name: name,
-            phone: phone,
-            email: email || null,
-            notes: notes || null
-        })
-    })
-    .then(response => response.json().then(data => ({ ok: response.ok, data })))
-    .then(({ok, data}) => {
-        if (!ok) {
-            showToast(data.error || 'Error al crear paciente', 'danger');
-            throw new Error(data.error);
-        }
-        
-        // Cerrar modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('newPatientModal'));
-        modal.hide();
-        
-        // Recargar lista de pacientes
-        loadPatients();
-        
-        // Seleccionar automáticamente el nuevo paciente
-        setTimeout(() => {
-            document.getElementById('patient_id').value = data.patient.id;
-        }, 300);
-        
-        showToast(`Paciente "${name}" creado exitosamente`, 'success');
-    })
-    .catch(error => {
-        console.error('Error saving patient:', error);
-    })
-    .finally(() => {
-        saveBtn.innerHTML = originalText;
-        saveBtn.disabled = false;
-    });
+    showToast(`✅ Paciente seleccionado: ${patient.name}`, 'success');
 }
 
 // ============================================================================
