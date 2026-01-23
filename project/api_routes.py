@@ -310,49 +310,58 @@ def get_professionals():
 def search_patients():
     """
     GET: Búsqueda autocomplete de pacientes por nombre o teléfono.
+    PRIORIDAD: Primero teléfono, luego nombre.
     
     Query params:
         - q (str): Término de búsqueda (mínimo 1 carácter)
     
     Returns:
         JSON: Lista de hasta 10 pacientes con {id, name, phone}
-    
-    Ejemplo de uso:
-        GET /api/search/patients?q=MAR
-        Response: [
-            {"id": 1, "name": "Maria González", "phone": "+51 999 888 777"},
-            {"id": 5, "name": "Marco Pérez", "phone": "+51 987 654 321"}
-        ]
     """
     query_term = request.args.get('q', '').strip()
     
     # Validación: al menos 1 carácter
     if not query_term or len(query_term) < 1:
-        return jsonify([])  # Retornar array vacío si no hay query
+        return jsonify([])
     
     clinic_id = get_user_clinic_id()
     
     # Base query
     if clinic_id:
-        query = Patient.query.filter_by(clinic_id=clinic_id)
+        base_query = Patient.query.filter_by(clinic_id=clinic_id)
     else:
         # SUPER_ADMIN necesita especificar clinic_id
         clinic_id_param = request.args.get('clinic_id', type=int)
         if not clinic_id_param:
             return jsonify({'error': 'clinic_id requerido para SUPER_ADMIN'}), 400
-        query = Patient.query.filter_by(clinic_id=clinic_id_param)
+        base_query = Patient.query.filter_by(clinic_id=clinic_id_param)
     
-    # ✅ TAREA 2: Búsqueda con ILIKE (case-insensitive) que COMIENCE con el término
-    # Usamos f'{query_term}%' para buscar nombres/teléfonos que EMPIECEN con el término
-    query = query.filter(
-        or_(
-            Patient.name.ilike(f'{query_term}%'),
-            Patient.phone.ilike(f'{query_term}%')
+    # ✅ BÚSQUEDA CON PRIORIDAD: Teléfono PRIMERO, luego Nombre
+    
+    # 1️⃣ Buscar por TELÉFONO (prioridad alta)
+    phone_matches = base_query.filter(
+        Patient.phone.ilike(f'{query_term}%')
+    ).order_by(Patient.name).limit(10).all()
+    
+    # 2️⃣ Buscar por NOMBRE (solo si no hay suficientes resultados por teléfono)
+    name_matches = []
+    if len(phone_matches) < 10:
+        remaining_slots = 10 - len(phone_matches)
+        
+        # Excluir IDs que ya están en phone_matches
+        exclude_ids = [p.id for p in phone_matches]
+        
+        name_query = base_query.filter(
+            Patient.name.ilike(f'{query_term}%')
         )
-    )
+        
+        if exclude_ids:
+            name_query = name_query.filter(~Patient.id.in_(exclude_ids))
+        
+        name_matches = name_query.order_by(Patient.name).limit(remaining_slots).all()
     
-    # Limitar a 10 resultados y ordenar por nombre
-    patients = query.order_by(Patient.name).limit(10).all()
+    # 3️⃣ Combinar resultados: TELÉFONO primero, luego NOMBRE
+    patients = phone_matches + name_matches
     
     # Retornar formato simplificado para autocomplete
     return jsonify([
@@ -363,7 +372,6 @@ def search_patients():
         }
         for patient in patients
     ])
-
 
 # ============================================================================
 # API: CITAS (APPOINTMENTS) - CRUD COMPLETO
