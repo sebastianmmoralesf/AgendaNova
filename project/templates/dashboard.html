@@ -680,12 +680,19 @@
                     <div class="row">
                         <!-- Patient Selection -->
                         <div class="col-md-6 mb-3">
-                            <label for="patient_id" class="form-label">
+                            <label for="patient_search" class="form-label">
                                 <i class="fas fa-user-injured me-1"></i>Paciente
                             </label>
-                            <select class="form-select" id="patient_id" required>
-                                <option value="">-- Seleccionar paciente --</option>
-                            </select>
+                            <div class="position-relative">
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="patient_search" 
+                                       placeholder="Buscar paciente por nombre o teléfono..."
+                                       autocomplete="off"
+                                       required>
+                                <input type="hidden" id="patient_id">
+                                <div id="patient-search-results" class="autocomplete-results"></div>
+                            </div>
                             <small class="text-muted">
                                 <a href="#" onclick="openNewPatientModal(); return false;">
                                     <i class="fas fa-plus-circle"></i> Crear nuevo paciente
