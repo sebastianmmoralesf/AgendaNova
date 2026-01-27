@@ -908,18 +908,6 @@ def get_stats():
     return jsonify(stats)
 
 
-# ============================================================================
-# API: BÚSQUEDA GLOBAL DE PACIENTES (Legacy - ahora está en /search/patients)
-# ============================================================================
-@api_bp.route('/search/patients', methods=['GET'])
-@login_required
-def search_patients_legacy():
-    """
-    NOTA: Esta función está duplicada arriba (línea ~550).
-    Mantener solo la versión actualizada de arriba.
-    """
-    pass  # Esta función ya está implementada arriba
-
 
 # ============================================================================
 # API: DISPONIBILIDAD DE HORARIOS
